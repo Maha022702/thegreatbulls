@@ -247,18 +247,14 @@ class _KiteChartViewState extends State<_KiteChartView> {
     ui.platformViewRegistry.registerViewFactory(
       _viewType,
       (int viewId) {
-        final container = html.DivElement()
-          ..id = 'chart-container-$viewId'
+        final iframe = html.IFrameElement()
+          ..id = 'chart-iframe-$viewId'
           ..style.width = '100%'
           ..style.height = '100%'
-          ..style.backgroundColor = '#1a1a1a'
-          ..style.overflow = 'hidden';
+          ..style.border = 'none'
+          ..srcdoc = _buildChartHTML(widget.symbol, widget.instrumentToken, widget.interval);
 
-        // Create chart HTML
-        final htmlContent = _buildChartHTML(widget.symbol, widget.instrumentToken, widget.interval);
-        container.setInnerHtml(htmlContent, treeSanitizer: html.NodeTreeSanitizer.trusted);
-
-        return container;
+        return iframe;
       },
     );
   }
