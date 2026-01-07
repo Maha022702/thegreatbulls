@@ -316,10 +316,17 @@ class _KiteChartViewState extends State<_KiteChartView> {
               const tokens = localStorage.getItem('kite_tokens');
               if (!tokens) {
                 document.getElementById('info').innerHTML = 'Error: Not authenticated. Please login first.';
+                console.error('No tokens in localStorage');
                 return;
               }
 
               const { access_token } = JSON.parse(tokens);
+              
+              if (!access_token) {
+                document.getElementById('info').innerHTML = 'Error: Invalid token. Please login again.';
+                console.error('No access token found');
+                return;
+              }
               
               // Calculate date range (last 100 days)
               const today = new Date();
@@ -328,28 +335,54 @@ class _KiteChartViewState extends State<_KiteChartView> {
               const fromStr = fromDate.toISOString().split('T')[0];
               const toStr = today.toISOString().split('T')[0];
 
-              console.log(`Fetching data for token: $token, interval: $interval`);
+              console.log(`Fetching data for token: $token, interval: $interval, from: \${fromStr}, to: \${toStr}`);
+              console.log(`Access token exists: \${access_token ? 'yes' : 'no'}`);
 
-              // Fetch historical data from backend
-              const response = await fetch(
+              // Try multiple backend URLs
+              const backendUrls = [
                 'https://thegreatbulls-backend.onrender.com/api/historical/$token?from='+fromStr+'&to='+toStr+'&interval=$interval',
-                {
-                  headers: {
-                    'Authorization': 'Bearer ' + access_token,
-                    'Content-Type': 'application/json'
-                  }
-                }
-              );
+                'https://thegreatbulls-api.onrender.com/api/historical/$token?from='+fromStr+'&to='+toStr+'&interval=$interval',
+                'http://localhost:3000/api/historical/$token?from='+fromStr+'&to='+toStr+'&interval=$interval'
+              ];
 
-              if (!response.ok) {
-                throw new Error(`HTTP error! status: \${response.status}`);
+              let response;
+              let lastError;
+              
+              for (const url of backendUrls) {
+                try {
+                  console.log('Trying URL:', url);
+                  response = await fetch(url, {
+                    headers: {
+                      'Authorization': 'Bearer ' + access_token,
+                      'Content-Type': 'application/json'
+                    }
+                  });
+                  
+                  if (response.ok) {
+                    console.log('Success with URL:', url);
+                    break;
+                  } else {
+                    console.log('Failed with status:', response.status);
+                    lastError = `HTTP error! status: \${response.status}`;
+                  }
+                } catch (e) {
+                  console.log('Error with URL:', url, e);
+                  lastError = e.message;
+                }
+              }
+
+              if (!response || !response.ok) {
+                throw new Error(lastError || 'Failed to fetch data from all backends');
               }
 
               const data = await response.json();
+              console.log('Response data:', data);
               
               if (!data.data || !data.data.candles) {
-                throw new Error('No candle data received');
+                throw new Error('No candle data received. Response: ' + JSON.stringify(data));
               }
+
+              console.log('Candles count:', data.data.candles.length);
 
               // Create chart
               const container = document.getElementById('chart');
@@ -438,8 +471,12 @@ class _KiteChartViewState extends State<_KiteChartView> {
 
             } catch (error) {
               console.error('Chart error:', error);
+              console.error('Error stack:', error.stack);
               document.getElementById('container').innerHTML = 
-                '<div class="error">Error: ' + error.message + '</div>';
+                '<div class="error">Error loading chart:<br>' + 
+                '<small>' + error.message + '</small></div>';
+              document.getElementById('info').innerHTML = 
+                'Error: ' + error.message + ' (Check browser console for details)';
             }
           }
 
