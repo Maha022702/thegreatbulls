@@ -270,8 +270,8 @@ class _KiteChartViewState extends State<_KiteChartView> {
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body { 
-            background-color: #1a1a1a; 
-            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
             color: white;
           }
           #container { 
@@ -282,29 +282,58 @@ class _KiteChartViewState extends State<_KiteChartView> {
           }
           #chart { 
             flex: 1;
-            border-radius: 8px;
+            border-radius: 0;
+            position: relative;
           }
           #info {
-            padding: 10px;
-            font-size: 12px;
-            color: #aaa;
-            border-top: 1px solid #333;
+            padding: 16px 20px;
+            font-size: 13px;
+            color: #e5e7eb;
+            border-top: 1px solid #27272a;
+            background: #0f0f0f;
           }
           .error {
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             width: 100%;
             height: 100%;
             font-size: 16px;
-            color: #ff6b6b;
+            color: #ef4444;
+            gap: 12px;
+          }
+          .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            gap: 16px;
+          }
+          .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #27272a;
+            border-top-color: #fbbf24;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+          }
+          @keyframes spin {
+            to { transform: rotate(360deg); }
           }
         </style>
       </head>
       <body>
         <div id="container">
-          <div id="chart"></div>
-          <div id="info">Loading chart...</div>
+          <div id="chart">
+            <div class="loading">
+              <div class="spinner"></div>
+              <div style="color: #fbbf24; font-weight: 600;">Loading $symbol chart...</div>
+            </div>
+          </div>
+          <div id="info">Fetching live data...</div>
         </div>
         <script>
           console.log('🎯 Live Charts: Script loaded');
@@ -331,8 +360,32 @@ class _KiteChartViewState extends State<_KiteChartView> {
               console.log('🎯 Live Charts: Access token found, length:', access_token.length);
               
               // Calculate date range (last 100 days)
+              // Calculate appropriate date range based on interval
+              let daysBack;
+              switch (interval) {
+                case 'minute':
+                  daysBack = 7; // Last 7 days for 1-minute data
+                  break;
+                case '3minute':
+                case '5minute':
+                  daysBack = 30; // Last month for 3/5-minute data
+                  break;
+                case '15minute':
+                case '30minute':
+                  daysBack = 60; // Last 2 months for 15/30-minute data
+                  break;
+                case '60minute':
+                  daysBack = 100; // Last 3+ months for hourly data
+                  break;
+                case 'day':
+                  daysBack = 365; // Last year for daily data
+                  break;
+                default:
+                  daysBack = 30;
+              }
+              
               const today = new Date();
-              const fromDate = new Date(today.getTime() - 100 * 24 * 60 * 60 * 1000);
+              const fromDate = new Date(today.getTime() - daysBack * 24 * 60 * 60 * 1000);
               
               const fromStr = fromDate.toISOString().split('T')[0];
               const toStr = today.toISOString().split('T')[0];
@@ -359,9 +412,26 @@ class _KiteChartViewState extends State<_KiteChartView> {
               if (!response.ok) {
                 const errorText = await response.text();
                 console.error('🎯 Live Charts: Response error:', errorText);
-                document.getElementById('info').innerHTML = 'Error: HTTP ' + response.status;
-                document.getElementById('chart').innerHTML = '<div style="color: red; padding: 20px;">Error: ' + response.status + ' - ' + errorText + '</div>';
-                throw new Error(`HTTP error! status: \${response.status}, body: \${errorText}`);
+                
+                let errorMessage = 'Failed to load chart data';
+                if (response.status === 401) {
+                  errorMessage = '🔒 Authentication failed. Please logout and login again.';
+                } else if (response.status === 400) {
+                  errorMessage = '⚠️ Invalid request. Try a different time interval.';
+                } else if (response.status === 429) {
+                  errorMessage = '⏱️ Rate limit exceeded. Please wait a moment.';
+                } else if (response.status >= 500) {
+                  errorMessage = '🔧 Server error. Please try again later.';
+                }
+                
+                document.getElementById('chart').innerHTML = 
+                  '<div class="error">' +
+                  '<div style="font-size: 48px;">⚠️</div>' +
+                  '<div style="font-weight: 600;">' + errorMessage + '</div>' +
+                  '<div style="color: #9ca3af; font-size: 12px;">Status: ' + response.status + '</div>' +
+                  '</div>';
+                document.getElementById('info').innerHTML = '<span style="color: #ef4444;">❌ Error loading data</span>';
+                throw new Error(`HTTP error! status: \${response.status}`);
               }
 
               const data = await response.json();
@@ -371,42 +441,92 @@ class _KiteChartViewState extends State<_KiteChartView> {
               if (!data.data || !data.data.candles) {
                 const msg = 'No candle data received. Response: ' + JSON.stringify(data);
                 console.error('🎯 Live Charts:', msg);
-                document.getElementById('info').innerHTML = 'Error: No data';
-                document.getElementById('chart').innerHTML = '<div style="color: red; padding: 20px;">' + msg + '</div>';
+                document.getElementById('chart').innerHTML = 
+                  '<div class="error">' +
+                  '<div style="font-size: 48px;">📊</div>' +
+                  '<div style="font-weight: 600; color: #fbbf24;">No data available</div>' +
+                  '<div style="color: #9ca3af; font-size: 12px;">Try a different interval</div>' +
+                  '</div>';
+                document.getElementById('info').innerHTML = '<span style="color: #fbbf24;">⚠️ No data</span>';
                 throw new Error(msg);
+              }
+              
+              if (data.data.candles.length === 0) {
+                console.error('🎯 Live Charts: Empty candles array');
+                document.getElementById('chart').innerHTML = 
+                  '<div class="error">' +
+                  '<div style="font-size: 48px;">📈</div>' +
+                  '<div style="font-weight: 600; color: #fbbf24;">No trading data for this period</div>' +
+                  '<div style="color: #9ca3af; font-size: 12px;">Try selecting a different date range or interval</div>' +
+                  '</div>';
+                document.getElementById('info').innerHTML = '<span style="color: #fbbf24;">⚠️ Empty data</span>';
+                return;
               }
 
               console.log('🎯 Live Charts: Candles count:', data.data.candles.length);
-              document.getElementById('info').innerHTML = 'Rendering chart with ' + data.data.candles.length + ' candles...';
 
-              // Create chart
+              // Clear loading state and prepare container
               const container = document.getElementById('chart');
+              container.innerHTML = ''; // Clear loading spinner
               console.log('🎯 Live Charts: Creating chart in container');
               
               const chart = LightweightCharts.createChart(container, {
                 layout: {
-                  background: { color: '#1a1a1a' },
-                  textColor: '#d1d5db',
+                  background: { color: '#0a0a0a' },
+                  textColor: '#ffffff',
                 },
                 width: container.offsetWidth,
                 height: container.offsetHeight,
                 timeScale: {
                   timeVisible: true,
-                  secondsVisible: false,
+                  secondsVisible: interval === 'minute',
+                  borderColor: '#3f3f46',
+                },
+                rightPriceScale: {
+                  borderColor: '#3f3f46',
+                  scaleMargins: {
+                    top: 0.1,
+                    bottom: 0.2,
+                  },
                 },
                 grid: {
-                  horzLines: { color: '#2d2d2d' },
-                  vertLines: { color: '#2d2d2d' },
-                }
+                  vertLines: {
+                    color: '#1f1f23',
+                    style: 1,
+                  },
+                  horzLines: {
+                    color: '#1f1f23',
+                    style: 1,
+                  },
+                },
+                crosshair: {
+                  mode: 1,
+                  vertLine: {
+                    width: 1,
+                    color: '#fbbf24',
+                    style: 3,
+                    labelBackgroundColor: '#fbbf24',
+                  },
+                  horzLine: {
+                    width: 1,
+                    color: '#fbbf24',
+                    style: 3,
+                    labelBackgroundColor: '#fbbf24',
+                  },
+                },
               });
 
-              // Create candlestick series
+              // Create candlestick series with better styling
               const candleSeries = chart.addCandlestickSeries({
-                upColor: '#26a69a',
-                downColor: '#ef5350',
-                borderVisible: false,
-                wickUpColor: '#26a69a',
-                wickDownColor: '#ef5350',
+                upColor: '#22c55e',
+                downColor: '#ef4444',
+                borderUpColor: '#22c55e',
+                borderDownColor: '#ef4444',
+                wickUpColor: '#22c55e',
+                wickDownColor: '#ef4444',
+                borderVisible: true,
+                priceLineVisible: true,
+                lastValueVisible: true,
               });
 
               // Parse candle data
@@ -426,20 +546,22 @@ class _KiteChartViewState extends State<_KiteChartView> {
               // Fit content
               chart.timeScale().fitContent();
 
-              // Add volume series
+              // Add volume series with better styling
               const volumeSeries = chart.addHistogramSeries({
-                color: '#26a69a4d',
+                color: '#22c55e80',
                 priceFormat: { type: 'volume' },
                 priceScaleId: 'volume',
                 lastValueVisible: false,
+                priceLineVisible: false,
               });
 
               const volumeData = data.data.candles.map(candle => {
                 const [timestamp, open, high, low, close, volume] = candle;
+                const isUp = parseFloat(close) >= parseFloat(open);
                 return {
                   time: Math.floor(new Date(timestamp * 1000).getTime() / 1000),
                   value: volume,
-                  color: parseFloat(close) > parseFloat(open) ? '#26a69a4d' : '#ef53504d',
+                  color: isUp ? '#22c55e60' : '#ef444460',
                 };
               });
 
@@ -447,16 +569,29 @@ class _KiteChartViewState extends State<_KiteChartView> {
 
               chart.priceScale('volume').applyOptions({
                 scaleMargins: {
-                  top: 0.8,
+                  top: 0.75,
                   bottom: 0,
                 },
               });
 
-              // Update info
+              // Update info with better formatting
               const latest = candleData[candleData.length - 1];
-              const infoText = 'Symbol: $symbol | Last Price: ₹' + latest.close.toFixed(2) + 
-                ' | High: ₹' + latest.high.toFixed(2) + 
-                ' | Low: ₹' + latest.low.toFixed(2);
+              const first = candleData[0];
+              const change = latest.close - first.open;
+              const changePercent = ((change / first.open) * 100).toFixed(2);
+              const isPositive = change >= 0;
+              
+              const infoText = '<div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">' +
+                '<div style="font-size: 18px; font-weight: 700; color: #fbbf24;">$symbol</div>' +
+                '<div style="font-size: 24px; font-weight: 700; color: ' + (isPositive ? '#22c55e' : '#ef4444') + ';">₹' + latest.close.toFixed(2) + '</div>' +
+                '<div style="color: ' + (isPositive ? '#22c55e' : '#ef4444') + '; font-weight: 600;">' + 
+                  (isPositive ? '▲' : '▼') + ' ₹' + Math.abs(change).toFixed(2) + ' (' + (isPositive ? '+' : '') + changePercent + '%)</div>' +
+                '<div style="color: #9ca3af;">H: <span style="color: #22c55e;">₹' + latest.high.toFixed(2) + '</span></div>' +
+                '<div style="color: #9ca3af;">L: <span style="color: #ef4444;">₹' + latest.low.toFixed(2) + '</span></div>' +
+                '<div style="color: #9ca3af;">O: <span style="color: #fbbf24;">₹' + latest.open.toFixed(2) + '</span></div>' +
+                '<div style="color: #9ca3af;">Volume: <span style="color: #60a5fa;">' + (volumeData[volumeData.length - 1].value / 1000).toFixed(0) + 'K</span></div>' +
+                '<div style="color: #f97316; font-size: 12px; margin-left: auto;">⚠️ Historical Data (~15 min delay)</div>' +
+              '</div>';
               document.getElementById('info').innerHTML = infoText;
               console.log('🎯 Live Charts: Chart rendered successfully!');
               console.log('🎯 Live Charts: Latest candle:', latest);
@@ -471,12 +606,18 @@ class _KiteChartViewState extends State<_KiteChartView> {
             } catch (error) {
               console.error('🎯 Live Charts: Chart error:', error);
               console.error('🎯 Live Charts: Error stack:', error.stack);
-              document.getElementById('container').innerHTML = 
-                '<div class="error">Error loading chart:<br>' + 
-                '<small>' + error.message + '</small><br><br>' +
-                '<small>Check console for details (F12)</small></div>';
+              
+              const chartDiv = document.getElementById('chart');
+              chartDiv.innerHTML = 
+                '<div class="error">' +
+                '<div style="font-size: 48px;">❌</div>' +
+                '<div style="font-weight: 600;">Failed to load chart</div>' +
+                '<div style="color: #9ca3af; font-size: 12px; margin-top: 8px;">' + error.message + '</div>' +
+                '<div style="color: #52525b; font-size: 11px; margin-top: 12px;">Open browser console (F12) for details</div>' +
+                '</div>';
+              
               document.getElementById('info').innerHTML = 
-                'Error: ' + error.message;
+                '<span style="color: #ef4444;">❌ Error: ' + error.message.substring(0, 100) + '</span>';
             }
           }
 
