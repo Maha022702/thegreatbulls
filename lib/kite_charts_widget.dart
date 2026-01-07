@@ -315,34 +315,20 @@ class _KiteChartViewState extends State<_KiteChartView> {
               document.getElementById('info').innerHTML = 'Initializing chart...';
               
               // Get access token from localStorage
-              console.log('🎯 Live Charts: Checking localStorage for kite_tokens');
-              const tokens = localStorage.getItem('kite_tokens');
+              console.log('🎯 Live Charts: Checking localStorage for access_token');
+              const access_token = localStorage.getItem('access_token');
+              const apiKey = 'ucc48co5brk4kb8e'; // From kite_config.dart
               
-              if (!tokens) {
+              if (!access_token) {
                 const msg = 'Error: Not authenticated. Please login first.';
                 document.getElementById('info').innerHTML = msg;
                 document.getElementById('chart').innerHTML = '<div style="color: red; padding: 20px;">' + msg + '</div>';
-                console.error('🎯 Live Charts: No tokens in localStorage');
+                console.error('🎯 Live Charts: No access_token in localStorage');
                 console.log('🎯 Live Charts: Available keys:', Object.keys(localStorage));
                 return;
               }
 
-              console.log('🎯 Live Charts: Tokens found:', tokens.substring(0, 50) + '...');
-              const tokenData = JSON.parse(tokens);
-              const { access_token } = tokenData;
-              
-              if (!access_token) {
-                const msg = 'Error: Invalid token. Please login again.';
-                document.getElementById('info').innerHTML = msg;
-                document.getElementById('chart').innerHTML = '<div style="color: red; padding: 20px;">' + msg + '</div>';
-                console.error('🎯 Live Charts: No access_token in parsed data');
-                console.log('🎯 Live Charts: Token data keys:', Object.keys(tokenData));
-                return;
-              }
-              
-              console.log('🎯 Live Charts: Access token exists, length:', access_token.length);
-              
-              console.log('🎯 Live Charts: Access token exists, length:', access_token.length);
+              console.log('🎯 Live Charts: Access token found, length:', access_token.length);
               
               // Calculate date range (last 100 days)
               const today = new Date();
@@ -363,7 +349,7 @@ class _KiteChartViewState extends State<_KiteChartView> {
 
               const response = await fetch(apiUrl, {
                 headers: {
-                  'Authorization': 'token ' + access_token,
+                  'Authorization': 'token ' + apiKey + ':' + access_token,
                   'Content-Type': 'application/json'
                 }
               });
