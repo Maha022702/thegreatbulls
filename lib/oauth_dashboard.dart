@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'kite_oauth_service.dart';
 import 'tradingview_widget.dart';
+import 'kite_charts_widget.dart';
 
 class OrderDialog extends StatefulWidget {
   const OrderDialog({super.key});
@@ -337,6 +338,7 @@ class _OAuthDashboardState extends State<OAuthDashboard> {
     'Watchlist',
     'Analytics',
     'Charts',
+    'Live Charts',
   ];
 
   final List<IconData> _navigationIcons = [
@@ -350,6 +352,7 @@ class _OAuthDashboardState extends State<OAuthDashboard> {
     Icons.visibility,
     Icons.analytics,
     Icons.candlestick_chart,
+    Icons.show_chart,
   ];
 
   @override
@@ -448,6 +451,8 @@ class _OAuthDashboardState extends State<OAuthDashboard> {
         return _buildAnalyticsContent();
       case 9:
         return const TradingViewChartPage();
+      case 10:
+        return const KiteChartsPage();
       default:
         return _buildDashboardContent();
     }
