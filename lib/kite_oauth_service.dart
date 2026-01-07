@@ -345,11 +345,35 @@ class KiteOAuthService {
 
   // Logout
   static Future<void> logout() async {
-    await _remove(_accessTokenKey);
-    await _remove(_publicTokenKey);
-    await _remove(_userIdKey);
-    await _remove(_loginTimeKey);
-    print('Logged out - tokens cleared');
+    try {
+      final accessToken = await _getAccessToken();
+      
+      // Call backend to invalidate token on Kite servers
+      if (accessToken != null) {
+        final url = '${KiteConfig.backendUrl}/api/session';
+        final response = await http.delete(
+          Uri.parse(url),
+          headers: {
+            'Authorization': 'token $accessToken',
+          },
+        );
+        
+        if (response.statusCode == 200) {
+          print('✅ Session invalidated on backend');
+        } else {
+          print('⚠️ Backend logout error: ${response.body}');
+        }
+      }
+    } catch (e) {
+      print('⚠️ Logout backend call failed: $e');
+    } finally {
+      // Always clear local storage regardless of backend response
+      await _remove(_accessTokenKey);
+      await _remove(_publicTokenKey);
+      await _remove(_userIdKey);
+      await _remove(_loginTimeKey);
+      print('🔓 Logged out - all tokens cleared from localStorage');
+    }
   }
 
   // Debug methods

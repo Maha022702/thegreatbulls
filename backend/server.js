@@ -372,7 +372,7 @@ app.get('/api/instruments/historical/:instrument_token/:interval', async (req, r
   }
 });
 
-// Logout - invalidate session
+// Logout - invalidate session using Kite SDK
 app.delete('/api/session', async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
@@ -380,18 +380,21 @@ app.delete('/api/session', async (req, res) => {
   }
 
   try {
-    const response = await axios.delete(
-      `${KITE_API_URL}/session/token`,
-      {
-        headers: {
-          'Authorization': authHeader,
-          'X-Kite-Version': '3'
-        },
-        data: new URLSearchParams({ api_key: KITE_API_KEY })
-      }
-    );
-    res.json(response.data);
+    const accessToken = authHeader.replace('token ', '');
+    
+    // Initialize Kite Connect with access token
+    const kc = new KiteConnect({
+      api_key: KITE_API_KEY,
+      access_token: accessToken
+    });
+    
+    // Invalidate the access token
+    await kc.invalidateAccessToken(accessToken);
+    
+    console.log('✅ Access token invalidated successfully');
+    res.json({ status: 'success', message: 'Session invalidated' });
   } catch (error) {
+    console.error('❌ Logout error:', error.message);
     // Even if Kite API fails, we clear local storage
     res.json({ status: 'success', message: 'Session cleared locally' });
   }
