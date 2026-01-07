@@ -14,7 +14,7 @@ class KiteChartsPage extends StatefulWidget {
 
 class _KiteChartsPageState extends State<KiteChartsPage> {
   String _selectedSymbol = 'RELIANCE';
-  String _selectedInterval = '60'; // in minutes
+  String _selectedInterval = '60minute'; // in Kite API format
   String _selectedInstrumentToken = '738561'; // RELIANCE token
 
   final List<Map<String, dynamic>> nseStocks = [
@@ -22,7 +22,7 @@ class _KiteChartsPageState extends State<KiteChartsPage> {
     {'name': 'TCS', 'symbol': 'TCS', 'token': '1922569'},
     {'name': 'Infosys', 'symbol': 'INFY', 'token': '1594725'},
     {'name': 'HDFC Bank', 'symbol': 'HDFCBANK', 'token': '1275529'},
-    {'name': 'ICICI Bank', 'symbol': 'ICICIBANK', 'token': '1913',},
+    {'name': 'ICICI Bank', 'symbol': 'ICICIBANK', 'token': '1913'},
     {'name': 'State Bank of India', 'symbol': 'SBIN', 'token': '4963329'},
     {'name': 'ITC', 'symbol': 'ITC', 'token': '897537'},
     {'name': 'Maruti Suzuki', 'symbol': 'MARUTI', 'token': '1346009'},
@@ -31,11 +31,12 @@ class _KiteChartsPageState extends State<KiteChartsPage> {
   ];
 
   final List<Map<String, String>> intervals = [
-    {'label': '1 min', 'value': '1'},
-    {'label': '5 min', 'value': '5'},
-    {'label': '15 min', 'value': '15'},
-    {'label': '30 min', 'value': '30'},
-    {'label': '1 hour', 'value': '60'},
+    {'label': '1 min', 'value': 'minute'},
+    {'label': '3 min', 'value': '3minute'},
+    {'label': '5 min', 'value': '5minute'},
+    {'label': '15 min', 'value': '15minute'},
+    {'label': '30 min', 'value': '30minute'},
+    {'label': '1 hour', 'value': '60minute'},
     {'label': 'Daily', 'value': 'day'},
   ];
 
