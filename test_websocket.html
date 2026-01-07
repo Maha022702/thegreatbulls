@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Live Market Data Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #ffffff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #fbbf24;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #9ca3af;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .controls {
+            background: #1f1f23;
+            border: 1px solid #3f3f46;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            color: #e5e7eb;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 13px;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            background: #0a0a0a;
+            border: 1px solid #3f3f46;
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 14px;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #fbbf24;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-1px);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .btn-connect {
+            background: #22c55e;
+            color: white;
+        }
+        
+        .btn-connect:hover {
+            background: #16a34a;
+        }
+        
+        .btn-disconnect {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .btn-disconnect:hover {
+            background: #dc2626;
+        }
+        
+        .btn-subscribe {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-subscribe:hover {
+            background: #2563eb;
+        }
+        
+        .btn-clear {
+            background: #6b7280;
+            color: white;
+        }
+        
+        .btn-clear:hover {
+            background: #4b5563;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .status {
+            background: #1f1f23;
+            border: 1px solid #3f3f46;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-indicator.connected {
+            background: #22c55e;
+        }
+        
+        .status-indicator.disconnected {
+            background: #ef4444;
+            animation: none;
+        }
+        
+        .status-indicator.connecting {
+            background: #fbbf24;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .logs {
+            background: #0a0a0a;
+            border: 1px solid #3f3f46;
+            border-radius: 12px;
+            padding: 15px;
+            height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        
+        .log-entry {
+            padding: 5px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+        }
+        
+        .log-info {
+            color: #60a5fa;
+        }
+        
+        .log-success {
+            color: #22c55e;
+        }
+        
+        .log-error {
+            color: #ef4444;
+            background: #7f1d1d33;
+        }
+        
+        .log-tick {
+            color: #fbbf24;
+        }
+        
+        .log-time {
+            color: #6b7280;
+            margin-right: 10px;
+        }
+        
+        .ticks-container {
+            background: #1f1f23;
+            border: 1px solid #3f3f46;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .tick-card {
+            background: #0a0a0a;
+            border: 1px solid #3f3f46;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+        
+        .tick-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .tick-symbol {
+            font-size: 16px;
+            font-weight: 700;
+            color: #fbbf24;
+        }
+        
+        .tick-price {
+            font-size: 20px;
+            font-weight: 700;
+        }
+        
+        .tick-price.up {
+            color: #22c55e;
+        }
+        
+        .tick-price.down {
+            color: #ef4444;
+        }
+        
+        .tick-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+            font-size: 12px;
+        }
+        
+        .tick-detail {
+            color: #9ca3af;
+        }
+        
+        .tick-detail span {
+            color: #e5e7eb;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐂 Live Market Data WebSocket Test</h1>
+        <p class="subtitle">Real-time tick streaming from Kite Connect via WebSocket</p>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Backend WebSocket URL</label>
+                <input type="text" id="wsUrl" value="wss://kcnpun9kwp.ap-south-1.awsapprunner.com/live" placeholder="wss://...">
+            </div>
+            
+            <div class="control-group">
+                <label>Access Token (from localStorage or paste here)</label>
+                <input type="text" id="accessToken" placeholder="Your Kite access token">
+            </div>
+            
+            <div class="control-group">
+                <label>Instrument Tokens (comma-separated)</label>
+                <select id="tokenPreset" onchange="updateTokens()">
+                    <option value="">-- Select Preset --</option>
+                    <option value="738561">RELIANCE (738561)</option>
+                    <option value="3786497">TCS (3786497)</option>
+                    <option value="408065">INFY (408065)</option>
+                    <option value="738561,3786497,408065">Top 3 Stocks</option>
+                    <option value="738561,3786497,408065,779521,341249">Top 5 Stocks</option>
+                    <option value="738561,3786497,408065,779521,341249,424961,4267265,969473,2815745,971009">All 10 Stocks</option>
+                </select>
+                <input type="text" id="tokens" placeholder="e.g., 738561,3786497,408065" style="margin-top: 10px;">
+            </div>
+            
+            <div class="button-group">
+                <button class="btn-connect" onclick="connect()">🔌 Connect</button>
+                <button class="btn-disconnect" onclick="disconnect()" disabled>❌ Disconnect</button>
+                <button class="btn-subscribe" onclick="subscribe()" disabled>📊 Subscribe</button>
+                <button class="btn-clear" onclick="clearLogs()">🗑️ Clear Logs</button>
+            </div>
+        </div>
+        
+        <div class="status">
+            <div class="status-indicator disconnected" id="statusIndicator"></div>
+            <div>
+                <strong>Status:</strong> <span id="statusText">Disconnected</span>
+                <span style="color: #6b7280; margin-left: 10px;" id="tickCount">0 ticks received</span>
+            </div>
+        </div>
+        
+        <div class="ticks-container">
+            <h3 style="margin-bottom: 15px; color: #fbbf24;">📈 Live Ticks</h3>
+            <div id="ticksDisplay">No live data yet. Connect and subscribe to see ticks.</div>
+        </div>
+        
+        <div class="logs" id="logs">
+            <div class="log-entry log-info">
+                <span class="log-time">[Ready]</span>
+                WebSocket test page loaded. Enter your access token and click Connect.
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let ws = null;
+        let tickCount = 0;
+        let latestTicks = {};
+        
+        // Try to load access token from localStorage
+        window.addEventListener('DOMContentLoaded', () => {
+            const storedToken = localStorage.getItem('access_token');
+            if (storedToken) {
+                document.getElementById('accessToken').value = storedToken;
+                log('✅ Loaded access token from localStorage', 'success');
+            }
+        });
+        
+        function updateTokens() {
+            const preset = document.getElementById('tokenPreset').value;
+            if (preset) {
+                document.getElementById('tokens').value = preset;
+            }
+        }
+        
+        function log(message, type = 'info') {
+            const logsDiv = document.getElementById('logs');
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.innerHTML = `<span class="log-time">[${time}]</span>${message}`;
+            logsDiv.appendChild(entry);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+        
+        function updateStatus(status, indicatorClass) {
+            document.getElementById('statusText').textContent = status;
+            document.getElementById('statusIndicator').className = `status-indicator ${indicatorClass}`;
+        }
+        
+        function updateTickCount() {
+            document.getElementById('tickCount').textContent = `${tickCount} ticks received`;
+        }
+        
+        function displayTick(tick) {
+            latestTicks[tick.instrument_token] = tick;
+            
+            const ticksDisplay = document.getElementById('ticksDisplay');
+            ticksDisplay.innerHTML = '';
+            
+            for (const [token, data] of Object.entries(latestTicks)) {
+                const change = data.last_price - data.ohlc?.close || 0;
+                const priceClass = change >= 0 ? 'up' : 'down';
+                const arrow = change >= 0 ? '▲' : '▼';
+                const changePercent = data.ohlc?.close ? ((change / data.ohlc.close) * 100).toFixed(2) : '0.00';
+                
+                const card = document.createElement('div');
+                card.className = 'tick-card';
+                card.innerHTML = `
+                    <div class="tick-header">
+                        <div class="tick-symbol">Token: ${token}</div>
+                        <div class="tick-price ${priceClass}">₹${data.last_price?.toFixed(2) || 'N/A'}</div>
+                    </div>
+                    <div style="color: ${change >= 0 ? '#22c55e' : '#ef4444'}; font-size: 13px; margin-bottom: 8px;">
+                        ${arrow} ₹${Math.abs(change).toFixed(2)} (${change >= 0 ? '+' : ''}${changePercent}%)
+                    </div>
+                    <div class="tick-details">
+                        <div class="tick-detail">Volume: <span>${(data.volume || 0).toLocaleString()}</span></div>
+                        <div class="tick-detail">OHLC: <span>${data.ohlc?.open?.toFixed(2) || 'N/A'} / ${data.ohlc?.high?.toFixed(2) || 'N/A'} / ${data.ohlc?.low?.toFixed(2) || 'N/A'} / ${data.ohlc?.close?.toFixed(2) || 'N/A'}</span></div>
+                        <div class="tick-detail">Change: <span>${data.change?.toFixed(2) || 'N/A'}%</span></div>
+                        <div class="tick-detail">Tradable: <span>${data.tradable ? '✅' : '❌'}</span></div>
+                        <div class="tick-detail">Mode: <span>${data.mode || 'N/A'}</span></div>
+                        <div class="tick-detail">Time: <span>${data.last_trade_time ? new Date(data.last_trade_time).toLocaleTimeString() : 'N/A'}</span></div>
+                    </div>
+                `;
+                ticksDisplay.appendChild(card);
+            }
+        }
+        
+        function connect() {
+            const wsUrl = document.getElementById('wsUrl').value;
+            const accessToken = document.getElementById('accessToken').value;
+            
+            if (!accessToken) {
+                log('❌ Error: Access token is required', 'error');
+                alert('Please enter your Kite access token');
+                return;
+            }
+            
+            log(`🔌 Connecting to ${wsUrl}...`, 'info');
+            updateStatus('Connecting...', 'connecting');
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = () => {
+                log('✅ WebSocket connected!', 'success');
+                updateStatus('Connected', 'connected');
+                
+                // Initialize ticker with access token
+                const initMessage = {
+                    type: 'init',
+                    accessToken: accessToken
+                };
+                ws.send(JSON.stringify(initMessage));
+                log(`📤 Sent init message with access token`, 'info');
+                
+                document.querySelector('.btn-connect').disabled = true;
+                document.querySelector('.btn-disconnect').disabled = false;
+                document.querySelector('.btn-subscribe').disabled = false;
+            };
+            
+            ws.onmessage = (event) => {
+                try {
+                    const message = JSON.parse(event.data);
+                    
+                    if (message.type === 'status') {
+                        log(`📡 ${message.message}`, 'success');
+                    } else if (message.type === 'error') {
+                        log(`❌ Error: ${message.message}`, 'error');
+                    } else if (message.type === 'subscribed') {
+                        log(`✅ Subscribed to ${message.tokens.length} instruments: ${message.tokens.join(', ')}`, 'success');
+                    } else if (message.type === 'ticks') {
+                        tickCount += message.data.length;
+                        updateTickCount();
+                        message.data.forEach(tick => {
+                            displayTick(tick);
+                        });
+                        log(`📊 Received ${message.data.length} tick(s)`, 'tick');
+                    } else if (message.type === 'order_update') {
+                        log(`📝 Order update: ${JSON.stringify(message.data)}`, 'info');
+                    }
+                } catch (e) {
+                    log(`❌ Error parsing message: ${e.message}`, 'error');
+                }
+            };
+            
+            ws.onerror = (error) => {
+                log(`❌ WebSocket error: ${error}`, 'error');
+                updateStatus('Error', 'disconnected');
+            };
+            
+            ws.onclose = () => {
+                log('❌ WebSocket disconnected', 'error');
+                updateStatus('Disconnected', 'disconnected');
+                
+                document.querySelector('.btn-connect').disabled = false;
+                document.querySelector('.btn-disconnect').disabled = true;
+                document.querySelector('.btn-subscribe').disabled = true;
+            };
+        }
+        
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+                log('🔌 Disconnected from WebSocket', 'info');
+            }
+        }
+        
+        function subscribe() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                log('❌ Not connected to WebSocket', 'error');
+                return;
+            }
+            
+            const tokensInput = document.getElementById('tokens').value;
+            if (!tokensInput) {
+                log('❌ Please enter instrument tokens', 'error');
+                alert('Please enter instrument tokens (e.g., 738561,3786497)');
+                return;
+            }
+            
+            const tokens = tokensInput.split(',').map(t => parseInt(t.trim())).filter(t => !isNaN(t));
+            
+            if (tokens.length === 0) {
+                log('❌ No valid tokens found', 'error');
+                return;
+            }
+            
+            const subscribeMessage = {
+                type: 'subscribe',
+                tokens: tokens
+            };
+            
+            ws.send(JSON.stringify(subscribeMessage));
+            log(`📤 Subscribing to ${tokens.length} instrument(s): ${tokens.join(', ')}`, 'info');
+        }
+        
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+            tickCount = 0;
+            updateTickCount();
+            log('🗑️ Logs cleared', 'info');
+        }
+    </script>
+</body>
+</html>

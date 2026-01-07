@@ -603,6 +603,160 @@ class _KiteChartViewState extends State<_KiteChartView> {
                 }
               });
 
+              // ========== LIVE WEBSOCKET STREAMING ==========
+              console.log('🔴 Initializing live WebSocket connection...');
+              
+              let ws = null;
+              let isLive = false;
+              let livePrice = latest.close;
+              let lastTickTime = Date.now();
+              
+              function connectWebSocket() {
+                const wsUrl = 'wss://kcnpun9kwp.ap-south-1.awsapprunner.com/live';
+                console.log('📡 Connecting to WebSocket:', wsUrl);
+                
+                ws = new WebSocket(wsUrl);
+                
+                ws.onopen = () => {
+                  console.log('✅ WebSocket connected!');
+                  
+                  // Initialize with access token
+                  ws.send(JSON.stringify({
+                    type: 'init',
+                    accessToken: access_token
+                  }));
+                  
+                  // Subscribe to this instrument
+                  setTimeout(() => {
+                    ws.send(JSON.stringify({
+                      type: 'subscribe',
+                      tokens: [$token]
+                    }));
+                    console.log('📊 Subscribed to token: $token');
+                  }, 1000);
+                };
+                
+                ws.onmessage = (event) => {
+                  try {
+                    const message = JSON.parse(event.data);
+                    
+                    if (message.type === 'status') {
+                      console.log('📡 Status:', message.message);
+                      if (message.message.includes('Connected')) {
+                        isLive = true;
+                        updateLiveIndicator(true);
+                      }
+                    } else if (message.type === 'ticks' && message.data.length > 0) {
+                      message.data.forEach(tick => {
+                        if (tick.instrument_token == $token && tick.last_price) {
+                          lastTickTime = Date.now();
+                          livePrice = tick.last_price;
+                          
+                          // Update info bar with live data
+                          const tickChange = tick.last_price - first.open;
+                          const tickChangePercent = ((tickChange / first.open) * 100).toFixed(2);
+                          const tickIsPositive = tickChange >= 0;
+                          
+                          const liveInfo = '<div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">' +
+                            '<div style="font-size: 18px; font-weight: 700; color: #fbbf24;">$symbol</div>' +
+                            '<div style="font-size: 24px; font-weight: 700; color: ' + (tickIsPositive ? '#22c55e' : '#ef4444') + ';" class="pulse">₹' + tick.last_price.toFixed(2) + '</div>' +
+                            '<div style="color: ' + (tickIsPositive ? '#22c55e' : '#ef4444') + '; font-weight: 600;">' + 
+                              (tickIsPositive ? '▲' : '▼') + ' ₹' + Math.abs(tickChange).toFixed(2) + ' (' + (tickIsPositive ? '+' : '') + tickChangePercent + '%)</div>' +
+                            '<div style="color: #9ca3af;">H: <span style="color: #22c55e;">₹' + (tick.ohlc?.high || latest.high).toFixed(2) + '</span></div>' +
+                            '<div style="color: #9ca3af;">L: <span style="color: #ef4444;">₹' + (tick.ohlc?.low || latest.low).toFixed(2) + '</span></div>' +
+                            '<div style="color: #9ca3af;">O: <span style="color: #fbbf24;">₹' + (tick.ohlc?.open || latest.open).toFixed(2) + '</span></div>' +
+                            '<div style="color: #9ca3af;">Volume: <span style="color: #60a5fa;">' + ((tick.volume || 0) / 1000).toFixed(0) + 'K</span></div>' +
+                            '<div style="color: #22c55e; font-size: 12px; margin-left: auto; display: flex; align-items: center; gap: 5px;">' +
+                              '<span style="width: 8px; height: 8px; background: #22c55e; border-radius: 50%; display: inline-block; animation: pulse 1.5s infinite;"></span>' +
+                              '🔴 LIVE' +
+                            '</div>' +
+                          '</div>';
+                          
+                          document.getElementById('info').innerHTML = liveInfo;
+                          
+                          // Add price line for current price
+                          candleSeries.createPriceLine({
+                            price: tick.last_price,
+                            color: tickIsPositive ? '#22c55e' : '#ef4444',
+                            lineWidth: 2,
+                            lineStyle: 2, // Dashed
+                            axisLabelVisible: true,
+                            title: 'LIVE',
+                          });
+                        }
+                      });
+                    }
+                  } catch (e) {
+                    console.error('❌ Error processing WebSocket message:', e);
+                  }
+                };
+                
+                ws.onerror = (error) => {
+                  console.error('❌ WebSocket error:', error);
+                  isLive = false;
+                  updateLiveIndicator(false);
+                };
+                
+                ws.onclose = () => {
+                  console.log('📡 WebSocket closed, reconnecting in 5s...');
+                  isLive = false;
+                  updateLiveIndicator(false);
+                  setTimeout(connectWebSocket, 5000);
+                };
+              }
+              
+              function updateLiveIndicator(live) {
+                // Add pulse animation to live price
+                if (!document.getElementById('pulseStyle')) {
+                  const style = document.createElement('style');
+                  style.id = 'pulseStyle';
+                  style.textContent = `
+                    @keyframes pulse {
+                      0%, 100% { opacity: 1; transform: scale(1); }
+                      50% { opacity: 0.7; transform: scale(1.05); }
+                    }
+                    .pulse {
+                      animation: pulse 1.5s ease-in-out infinite;
+                    }
+                  `;
+                  document.head.appendChild(style);
+                }
+              }
+              
+              // Check if market is open (9:15 AM to 3:30 PM IST, Mon-Fri)
+              function isMarketOpen() {
+                const now = new Date();
+                const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+                const hours = istTime.getHours();
+                const minutes = istTime.getMinutes();
+                const day = istTime.getDay();
+                
+                // Weekend check
+                if (day === 0 || day === 6) return false;
+                
+                // Market hours: 9:15 AM to 3:30 PM
+                const currentMinutes = hours * 60 + minutes;
+                const marketOpen = 9 * 60 + 15; // 9:15 AM
+                const marketClose = 15 * 60 + 30; // 3:30 PM
+                
+                return currentMinutes >= marketOpen && currentMinutes <= marketClose;
+              }
+              
+              // Connect to WebSocket if market is open
+              if (isMarketOpen()) {
+                console.log('📈 Market is open, connecting to live stream...');
+                connectWebSocket();
+              } else {
+                console.log('🔒 Market is closed. Showing historical data only.');
+                const closedMsg = '<div style="color: #f97316; font-size: 12px; display: flex; align-items: center; gap: 5px;">' +
+                  '⏸️ Market Closed - Historical Data' +
+                '</div>';
+                document.getElementById('info').innerHTML = document.getElementById('info').innerHTML.replace(
+                  '⚠️ Historical Data (~15 min delay)',
+                  closedMsg
+                );
+              }
+
             } catch (error) {
               console.error('🎯 Live Charts: Chart error:', error);
               console.error('🎯 Live Charts: Error stack:', error.stack);
