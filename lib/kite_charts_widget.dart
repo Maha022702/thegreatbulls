@@ -479,7 +479,7 @@ class _KiteChartViewState extends State<_KiteChartView> {
                 height: container.offsetHeight,
                 timeScale: {
                   timeVisible: true,
-                  secondsVisible: interval === 'minute',
+                  secondsVisible: '$interval' === 'minute',
                   borderColor: '#3f3f46',
                 },
                 rightPriceScale: {
