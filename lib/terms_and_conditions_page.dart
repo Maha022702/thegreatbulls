@@ -149,7 +149,7 @@ class TermsAndConditionsPage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const Text(
-            '7. Limitation of Liability',
+            '7. Zerodha Kite Connect Integration',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -158,16 +158,52 @@ class TermsAndConditionsPage extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            '7.1. THE GREAT BULLS is not responsible for any financial losses, damages, or disputes arising from community participation.',
+            '7.1. Our platform uses Zerodha Kite Connect API to provide trading services. By using this feature, you agree to:',
             style: TextStyle(color: Colors.white),
           ),
           const Text(
-            '7.2. Participation in trading activities is at your own risk, and you should consult with a financial advisor before making significant financial decisions.',
+            '• Zerodha\'s terms and conditions available at https://zerodha.com/terms',
+            style: TextStyle(color: Colors.white),
+          ),
+          const Text(
+            '• Kite Connect API terms available at https://kite.trade/docs/connect',
+            style: TextStyle(color: Colors.white),
+          ),
+          const Text(
+            '7.2. Authorization: When you connect your Zerodha account, you authorize The Great Bulls to:',
+            style: TextStyle(color: Colors.white),
+          ),
+          const Text(
+            '• Access your account information (profile, margins, holdings)',
+            style: TextStyle(color: Colors.white),
+          ),
+          const Text(
+            '• View your orders, positions, and trade history',
+            style: TextStyle(color: Colors.white),
+          ),
+          const Text(
+            '• Place, modify, and cancel orders on your behalf as instructed by you',
+            style: TextStyle(color: Colors.white),
+          ),
+          const Text(
+            '7.3. Revocation: You can revoke access at any time by:',
+            style: TextStyle(color: Colors.white),
+          ),
+          const Text(
+            '• Logging out from our platform',
+            style: TextStyle(color: Colors.white),
+          ),
+          const Text(
+            '• Revoking access from Zerodha Console',
+            style: TextStyle(color: Colors.white),
+          ),
+          const Text(
+            '7.4. Disclaimer: The Great Bulls is an independent platform and is not affiliated with, endorsed by, or partnered with Zerodha. We are a third-party application using Kite Connect API.',
             style: TextStyle(color: Colors.white),
           ),
           const SizedBox(height: 16),
           const Text(
-            '8. Amendments',
+            '8. Limitation of Liability',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -176,12 +212,24 @@ class TermsAndConditionsPage extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            '8.1. These terms may be updated from time to time. Members will be notified of significant changes. Continued participation in the community after updates constitutes acceptance of the new terms.',
+            '8.1. THE GREAT BULLS is not responsible for any financial losses, damages, or disputes arising from community participation.',
+            style: TextStyle(color: Colors.white),
+          ),
+          const Text(
+            '8.2. Participation in trading activities is at your own risk, and you should consult with a financial advisor before making significant financial decisions.',
+            style: TextStyle(color: Colors.white),
+          ),
+          const Text(
+            '8.3. We are not liable for any losses due to API downtime, connectivity issues, or order execution failures.',
+            style: TextStyle(color: Colors.white),
+          ),
+          const Text(
+            '8.4. Market risks are inherent in trading. Past performance does not guarantee future results.',
             style: TextStyle(color: Colors.white),
           ),
           const SizedBox(height: 16),
           const Text(
-            '9. Governing Law',
+            '10. Amendments',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -190,7 +238,25 @@ class TermsAndConditionsPage extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            '9.1. These terms shall be governed by and construed in accordance with the laws of [Jurisdiction].',
+            '10.1. These terms may be updated from time to time. Members will be notified of significant changes. Continued participation in the community after updates constitutes acceptance of the new terms.',
+            style: TextStyle(color: Colors.white),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            '11. Governing Law',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.amber,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            '11.1. These terms shall be governed by and construed in accordance with the laws of India.',
+            style: TextStyle(color: Colors.white),
+          ),
+          const Text(
+            '11.2. Any disputes arising from the use of this platform shall be subject to the exclusive jurisdiction of courts in Tamil Nadu, India.',
             style: TextStyle(color: Colors.white),
           ),
           const SizedBox(height: 16),

@@ -179,7 +179,62 @@ class PrivacyPolicyPage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const Text(
-            '7. Data Security',
+            '7. Third-Party Integrations (Zerodha Kite Connect)',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.amber,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            '7.1. Our platform integrates with Zerodha Kite Connect API to provide trading functionality. When you connect your Zerodha account:',
+            style: TextStyle(color: Colors.white),
+          ),
+          const Text(
+            '• We use OAuth 2.0 authentication - we never store your Zerodha password',
+            style: TextStyle(color: Colors.white),
+          ),
+          const Text(
+            '• Access tokens are stored securely and used only to execute your trading requests',
+            style: TextStyle(color: Colors.white),
+          ),
+          const Text(
+            '• We access your portfolio, orders, positions, and holdings data as authorized by you',
+            style: TextStyle(color: Colors.white),
+          ),
+          const Text(
+            '• You can revoke access at any time through your Zerodha account settings',
+            style: TextStyle(color: Colors.white),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            '7.2. Data accessed through Kite Connect:',
+            style: TextStyle(color: Colors.white),
+          ),
+          const Text(
+            '• User profile information (name, email, user ID)',
+            style: TextStyle(color: Colors.white),
+          ),
+          const Text(
+            '• Account margins and balances',
+            style: TextStyle(color: Colors.white),
+          ),
+          const Text(
+            '• Holdings and positions',
+            style: TextStyle(color: Colors.white),
+          ),
+          const Text(
+            '• Order history and trades',
+            style: TextStyle(color: Colors.white),
+          ),
+          const Text(
+            '• Market quotes and instruments',
+            style: TextStyle(color: Colors.white),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            '8. Data Security',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -191,9 +246,21 @@ class PrivacyPolicyPage extends StatelessWidget {
             'We implement robust security measures, including encryption, firewalls, and secure servers, to protect your data. However, no system is 100% secure.',
             style: TextStyle(color: Colors.white),
           ),
+          const Text(
+            '• All data transmission is encrypted using HTTPS/TLS',
+            style: TextStyle(color: Colors.white),
+          ),
+          const Text(
+            '• Access tokens are stored securely and never exposed to client-side code',
+            style: TextStyle(color: Colors.white),
+          ),
+          const Text(
+            '• Regular security audits and updates are performed',
+            style: TextStyle(color: Colors.white),
+          ),
           const SizedBox(height: 16),
           const Text(
-            '8. Changes to This Policy',
+            '9. Changes to This Policy',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -207,7 +274,7 @@ class PrivacyPolicyPage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const Text(
-            '9. Contact Us',
+            '10. Contact Us',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
