@@ -4,7 +4,7 @@ class KiteConfig {
   static const String apiSecret = '739yzfm69iarehe4m6uhs9e236a2kljj';
   
   // Redirect URI for OAuth callback - use custom domain
-  static const String redirectUri = 'https://thegreatbulls.in/auth/callback';
+  static const String redirectUri = 'https://www.thegreatbulls.in/auth/callback';
   
   static const String kiteLoginUrl = 'https://kite.zerodha.com/connect/login';
   static const String kiteApiUrl = 'https://api.kite.trade';
