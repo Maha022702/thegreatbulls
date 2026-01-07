@@ -622,6 +622,605 @@ class _OAuthDashboardState extends State<OAuthDashboard> {
     }
   }
 
+  void _onNavigationTap(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  Widget _getCurrentPage() {
+    switch (_selectedIndex) {
+      case 0:
+        return _buildDashboardContent();
+      case 1:
+        return _buildTradingContent();
+      case 2:
+        return _buildOrdersContent();
+      case 3:
+        return _buildPositionsContent();
+      case 4:
+        return _buildHoldingsContent();
+      case 5:
+        return _buildPortfolioContent();
+      case 6:
+        return _buildWatchlistContent();
+      case 7:
+        return _buildAnalyticsContent();
+      default:
+        return _buildDashboardContent();
+    }
+  }
+
+  Widget _buildDashboardContent() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Welcome Section
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.grey[900],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.amber.withOpacity(0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Welcome to The Great Bulls',
+                  style: TextStyle(
+                    color: Colors.amber,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Your comprehensive trading platform for smart investments',
+                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () => _onNavigationTap(1), // Trading
+                      icon: const Icon(Icons.show_chart),
+                      label: const Text('Start Trading'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.amber,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    ElevatedButton.icon(
+                      onPressed: () => _onNavigationTap(2), // Orders
+                      icon: const Icon(Icons.list_alt),
+                      label: const Text('View Orders'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey[700],
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 30),
+
+          // Quick Stats Grid
+          GridView.count(
+            crossAxisCount: 4,
+            crossAxisSpacing: 20,
+            mainAxisSpacing: 20,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            children: [
+              _buildStatCard('Total Orders', _orders?.length.toString() ?? '0', Icons.receipt),
+              _buildStatCard('Open Positions', _positions?.length.toString() ?? '0', Icons.trending_up),
+              _buildStatCard('Holdings', _holdings?.length.toString() ?? '0', Icons.account_balance_wallet),
+              _buildStatCard('Margin Available', _margins?['net']?.toStringAsFixed(2) ?? '0.00', Icons.account_balance),
+            ],
+          ),
+
+          const SizedBox(height: 30),
+
+          // Recent Activity
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.grey[900],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Recent Activity',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                if (_orders != null && _orders!.isNotEmpty)
+                  ...(_orders!['data'] as List?)!.take(5).map((order) => _buildActivityItem(order))
+                else
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Text(
+                        'No recent activity',
+                        style: TextStyle(color: Colors.white54),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTradingContent() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Trading Interface Header
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.grey[900],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.amber.withOpacity(0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Trading Interface',
+                  style: TextStyle(
+                    color: Colors.amber,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Place, modify, and cancel orders with advanced trading tools',
+                  style: TextStyle(color: Colors.white70),
+                ),
+                const SizedBox(height: 20),
+                Center(
+                  child: ElevatedButton.icon(
+                    onPressed: _showOrderDialog,
+                    icon: const Icon(Icons.add, size: 28),
+                    label: const Text('Place New Order'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.amber,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 30),
+
+          // Market Data Section
+          if (_quotes != null) _buildQuotesCard(),
+
+          const SizedBox(height: 20),
+
+          // Quick Actions
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.grey[900],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Quick Actions',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildQuickActionButton(
+                        'Modify Order',
+                        Icons.edit,
+                        () => _showModifyOrderDialog(),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildQuickActionButton(
+                        'Cancel Order',
+                        Icons.cancel,
+                        () => _showCancelOrderDialog(),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOrdersContent() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Orders Header
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.grey[900],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.amber.withOpacity(0.3)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Order History',
+                      style: TextStyle(
+                        color: Colors.amber,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 5),
+                    Text(
+                      'Track and manage all your orders',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ],
+                ),
+                ElevatedButton.icon(
+                  onPressed: _loadOrders,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Refresh'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.amber,
+                    foregroundColor: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Orders List
+          if (_orders != null) _buildOrdersCard() else _buildLoadingCard('Loading orders...'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPositionsContent() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Positions Header
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.grey[900],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.amber.withOpacity(0.3)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Positions',
+                      style: TextStyle(
+                        color: Colors.amber,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 5),
+                    Text(
+                      'Monitor your current positions and P&L',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ],
+                ),
+                ElevatedButton.icon(
+                  onPressed: _loadPositions,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Refresh'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.amber,
+                    foregroundColor: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Positions List
+          if (_positions != null) _buildPositionsCard() else _buildLoadingCard('Loading positions...'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHoldingsContent() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Holdings Header
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.grey[900],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.amber.withOpacity(0.3)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Holdings',
+                      style: TextStyle(
+                        color: Colors.amber,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 5),
+                    Text(
+                      'View your investment portfolio',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ],
+                ),
+                ElevatedButton.icon(
+                  onPressed: _loadHoldings,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Refresh'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.amber,
+                    foregroundColor: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Holdings List
+          if (_holdings != null) _buildHoldingsCard() else _buildLoadingCard('Loading holdings...'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPortfolioContent() {
+    return _buildComingSoonContent('Portfolio Analytics');
+  }
+
+  Widget _buildWatchlistContent() {
+    return _buildComingSoonContent('Watchlist');
+  }
+
+  Widget _buildAnalyticsContent() {
+    return _buildComingSoonContent('Analytics & Reports');
+  }
+
+  Widget _buildComingSoonContent(String title) {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(40),
+        decoration: BoxDecoration(
+          color: Colors.grey[900],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.amber.withOpacity(0.3)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.access_time,
+              size: 64,
+              color: Colors.amber.withOpacity(0.5),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              '$title - Coming Soon',
+              style: const TextStyle(
+                color: Colors.amber,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'This feature is under development and will be available soon.',
+              style: TextStyle(color: Colors.white70),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String title, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.amber.withOpacity(0.3)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: Colors.amber, size: 32),
+          const SizedBox(height: 10),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            title,
+            style: TextStyle(color: Colors.white70, fontSize: 12),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivityItem(Map<String, dynamic> order) {
+    final status = order['status'] ?? 'Unknown';
+    final tradingsymbol = order['tradingsymbol'] ?? 'N/A';
+    final transactionType = order['transaction_type'] ?? 'N/A';
+    final quantity = order['quantity'] ?? 0;
+    final orderType = order['order_type'] ?? 'N/A';
+
+    Color statusColor;
+    switch (status.toLowerCase()) {
+      case 'complete':
+        statusColor = Colors.green;
+        break;
+      case 'open':
+        statusColor = Colors.blue;
+        break;
+      case 'cancelled':
+        statusColor = Colors.red;
+        break;
+      default:
+        statusColor = Colors.grey;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey[800],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(
+              color: statusColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$transactionType $tradingsymbol',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  'Qty: $quantity | Type: $orderType | Status: $status',
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            order['order_timestamp']?.split('T')[0] ?? '',
+            style: TextStyle(color: Colors.white54, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActionButton(String label, IconData icon, VoidCallback onPressed) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.grey[700],
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+      ),
+    );
+  }
+
+  Widget _buildLoadingCard(String message) {
+    return Container(
+      padding: const EdgeInsets.all(40),
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Center(
+        child: Column(
+          children: [
+            const CircularProgressIndicator(color: Colors.amber),
+            const SizedBox(height: 20),
+            Text(message, style: const TextStyle(color: Colors.white70)),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _logout() async {
     await KiteOAuthService.logout();
     if (mounted) {
@@ -653,70 +1252,156 @@ class _OAuthDashboardState extends State<OAuthDashboard> {
 
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        title: const Text(
-          'DevForge Dashboard',
-          style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold),
-        ),
-        actions: [
-          IconButton(
-            onPressed: _loadAllData,
-            icon: const Icon(Icons.refresh, color: Colors.amber),
-            tooltip: 'Refresh Data',
+      body: Row(
+        children: [
+          // Sidebar
+          Container(
+            width: 280,
+            color: Colors.grey[900],
+            child: Column(
+              children: [
+                // Header
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: Colors.amber, width: 1),
+                    ),
+                  ),
+                  child: const Column(
+                    children: [
+                      Icon(
+                        Icons.show_chart,
+                        color: Colors.amber,
+                        size: 40,
+                      ),
+                      SizedBox(height: 10),
+                      Text(
+                        'The Great Bulls',
+                        style: TextStyle(
+                          color: Colors.amber,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        'Trading Platform',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Navigation Items
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: _navigationItems.length,
+                    itemBuilder: (context, index) {
+                      final isSelected = _selectedIndex == index;
+                      return Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isSelected ? Colors.amber.withOpacity(0.1) : Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border(
+                            left: BorderSide(
+                              color: isSelected ? Colors.amber : Colors.transparent,
+                              width: 4,
+                            ),
+                          ),
+                        ),
+                        child: ListTile(
+                          leading: Icon(
+                            _navigationIcons[index],
+                            color: isSelected ? Colors.amber : Colors.white70,
+                          ),
+                          title: Text(
+                            _navigationItems[index],
+                            style: TextStyle(
+                              color: isSelected ? Colors.amber : Colors.white70,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            ),
+                          ),
+                          onTap: () => _onNavigationTap(index),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+                // Footer with logout
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  child: ElevatedButton.icon(
+                    onPressed: _logout,
+                    icon: const Icon(Icons.logout, color: Colors.black),
+                    label: const Text('Logout'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 45),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          IconButton(
-            onPressed: _checkTokenStatus,
-            icon: const Icon(Icons.info, color: Colors.blue),
-            tooltip: 'Check Token Status',
-          ),
-          IconButton(
-            onPressed: _logout,
-            icon: const Icon(Icons.logout, color: Colors.red),
-            tooltip: 'Logout',
+
+          // Main Content
+          Expanded(
+            child: Column(
+              children: [
+                // Top Bar
+                Container(
+                  height: 60,
+                  color: Colors.grey[850],
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _navigationItems[_selectedIndex],
+                        style: const TextStyle(
+                          color: Colors.amber,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: _loadAllData,
+                            icon: const Icon(Icons.refresh, color: Colors.amber),
+                            tooltip: 'Refresh Data',
+                          ),
+                          IconButton(
+                            onPressed: _checkTokenStatus,
+                            icon: const Icon(Icons.info, color: Colors.blue),
+                            tooltip: 'Check Token Status',
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Content Area
+                Expanded(
+                  child: Container(
+                    color: Colors.black,
+                    child: _getCurrentPage(),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showOrderDialog,
-        backgroundColor: Colors.amber,
-        child: const Icon(Icons.add, color: Colors.black),
-        tooltip: 'Place Order',
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // User Profile Section
-            if (_userProfile != null) _buildUserProfileCard(),
-
-            const SizedBox(height: 20),
-
-            // Margins Section
-            if (_margins != null) _buildMarginsCard(),
-
-            const SizedBox(height: 20),
-
-            // Holdings Section
-            if (_holdings != null) _buildHoldingsCard(),
-
-            const SizedBox(height: 20),
-
-            // Orders Section
-            if (_orders != null) _buildOrdersCard(),
-
-            const SizedBox(height: 20),
-
-            // Positions Section
-            if (_positions != null) _buildPositionsCard(),
-
-            const SizedBox(height: 20),
-
-            // Market Quotes Section
-            if (_quotes != null) _buildQuotesCard(),
-          ],
-        ),
       ),
     );
   }
@@ -1782,6 +2467,199 @@ class _OAuthDashboardState extends State<OAuthDashboard> {
           Text(
             value,
             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _loadOrders() async {
+    try {
+      final orders = await KiteOAuthService.getOrders();
+      setState(() {
+        _orders = orders;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load orders: $e')),
+      );
+    }
+  }
+
+  Future<void> _loadPositions() async {
+    try {
+      final positions = await KiteOAuthService.getPositions();
+      setState(() {
+        _positions = positions;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load positions: $e')),
+      );
+    }
+  }
+
+  Future<void> _loadHoldings() async {
+    try {
+      final holdings = await KiteOAuthService.getHoldings();
+      setState(() {
+        _holdings = holdings;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load holdings: $e')),
+      );
+    }
+  }
+
+  void _showModifyOrderDialog() {
+    if (_orders == null || _orders!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No orders available to modify')),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.grey[900],
+        title: const Text(
+          'Modify Order',
+          style: TextStyle(color: Colors.amber),
+        ),
+        content: SizedBox(
+          width: 400,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Select an order to modify:',
+                style: TextStyle(color: Colors.white),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(
+                  labelText: 'Order ID',
+                  labelStyle: TextStyle(color: Colors.white70),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white30),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.amber),
+                  ),
+                ),
+                dropdownColor: Colors.grey[800],
+                style: const TextStyle(color: Colors.white),
+                items: (_orders!['data'] as List?)?.map((order) {
+                  final orderId = order['order_id']?.toString() ?? '';
+                  final symbol = order['tradingsymbol'] ?? '';
+                  final status = order['status'] ?? '';
+                  return DropdownMenuItem(
+                    value: orderId,
+                    child: Text('$orderId - $symbol ($status)'),
+                  );
+                }).toList() ?? [],
+                onChanged: (value) {
+                  // TODO: Implement modify order logic
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Modify order feature coming soon')),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCancelOrderDialog() {
+    if (_orders == null || _orders!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No orders available to cancel')),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.grey[900],
+        title: const Text(
+          'Cancel Order',
+          style: TextStyle(color: Colors.amber),
+        ),
+        content: SizedBox(
+          width: 400,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Select an order to cancel:',
+                style: TextStyle(color: Colors.white),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(
+                  labelText: 'Order ID',
+                  labelStyle: TextStyle(color: Colors.white70),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white30),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.amber),
+                  ),
+                ),
+                dropdownColor: Colors.grey[800],
+                style: const TextStyle(color: Colors.white),
+                items: (_orders!['data'] as List?)?.where((order) => order['status'] == 'OPEN').map((order) {
+                  final orderId = order['order_id']?.toString() ?? '';
+                  final symbol = order['tradingsymbol'] ?? '';
+                  return DropdownMenuItem(
+                    value: orderId,
+                    child: Text('$orderId - $symbol'),
+                  );
+                }).toList() ?? [],
+                onChanged: (value) async {
+                  if (value != null) {
+                    Navigator.of(context).pop();
+                    // Find the order to get variety
+                    final orderData = (_orders!['data'] as List?)?.firstWhere(
+                      (order) => order['order_id']?.toString() == value,
+                      orElse: () => null,
+                    );
+                    if (orderData != null) {
+                      final variety = orderData['variety'] ?? 'regular';
+                      try {
+                        await KiteOAuthService.cancelOrder(variety, value);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Order cancelled successfully')),
+                        );
+                        _loadOrders(); // Refresh orders
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to cancel order: $e')),
+                        );
+                      }
+                    }
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
           ),
         ],
       ),
