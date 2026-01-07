@@ -1,14 +1,14 @@
 // Kite API Configuration
 class KiteConfig {
-  static const String apiKey = 'ucc48co5brk4kb8e';
-  static const String apiSecret = '739yzfm69iarehe4m6uhs9e236a2kljj';
+  static const String apiKey = 'j3xfcw2nl5v4lx3v';
+  static const String apiSecret = 'd2jx1v3z138wb51njixjy4vtq55otooj';
   
   // Redirect URI for OAuth callback - use custom domain
-  static const String redirectUri = 'https://www.thegreatbulls.in/auth/callback';
+  static const String redirectUri = 'https://thegreatbulls.in/auth/callback';
   
   static const String kiteLoginUrl = 'https://kite.zerodha.com/connect/login';
   static const String kiteApiUrl = 'https://api.kite.trade';
-  static const String appName = 'DevForge';
+  static const String appName = 'TheGreatbulls';
   static const String clientId = 'ZLE384';
   
   // Backend server URL - AWS App Runner

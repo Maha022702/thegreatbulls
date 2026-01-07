@@ -453,7 +453,7 @@ class _OAuthDashboardState extends State<OAuthDashboard> {
       case 9:
         return const TradingViewChartPage();
       case 10:
-        return const SimpleChartsPage();
+        return const KiteChartsPage();
       default:
         return _buildDashboardContent();
     }
