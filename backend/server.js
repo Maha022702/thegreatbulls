@@ -316,23 +316,30 @@ app.get('/api/instruments/:exchange', async (req, res) => {
 app.get('/api/instruments/historical/:instrument_token/:interval', async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
+    console.log('❌ No authorization header');
     return res.status(401).json({ error: 'Authorization header required' });
   }
 
   try {
     const { instrument_token, interval } = req.params;
     const { from, to } = req.query;
-    const response = await axios.get(
-      `${KITE_API_URL}/instruments/historical/${instrument_token}/${interval}?from=${from}&to=${to}`,
-      {
-        headers: {
-          'Authorization': authHeader,
-          'X-Kite-Version': '3'
-        }
+    
+    const kiteUrl = `${KITE_API_URL}/instruments/historical/${instrument_token}/${interval}?from=${from}&to=${to}`;
+    console.log('📊 Fetching historical data from Kite API:', kiteUrl);
+    console.log('📊 Instrument:', instrument_token, 'Interval:', interval, 'Date range:', from, 'to', to);
+    
+    const response = await axios.get(kiteUrl, {
+      headers: {
+        'Authorization': authHeader,
+        'X-Kite-Version': '3'
       }
-    );
+    });
+    
+    console.log('✅ Kite API response received, candles:', response.data?.data?.candles?.length || 0);
     res.json(response.data);
   } catch (error) {
+    console.error('❌ Historical data error:', error.response?.data || error.message);
+    console.error('❌ Error status:', error.response?.status);
     res.status(error.response?.status || 500).json({
       error: 'Historical data request failed',
       details: error.response?.data || error.message
