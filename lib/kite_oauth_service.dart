@@ -9,6 +9,7 @@ class KiteOAuthService {
   static const String _publicTokenKey = 'public_token';
   static const String _userIdKey = 'user_id';
   static const String _loginTimeKey = 'login_time';
+  static const String _apiKeyVersionKey = 'api_key_version';
 
   // Web storage
   static Map<String, String> _webStorage = {};
@@ -17,7 +18,7 @@ class KiteOAuthService {
   static void _initWebStorage() {
     if (kIsWeb) {
       try {
-        final keys = [_accessTokenKey, _publicTokenKey, _userIdKey, _loginTimeKey];
+        final keys = [_accessTokenKey, _publicTokenKey, _userIdKey, _loginTimeKey, _apiKeyVersionKey];
         for (final key in keys) {
           if (html.window.localStorage.containsKey(key)) {
             _webStorage[key] = html.window.localStorage[key]!;
@@ -339,8 +340,24 @@ class KiteOAuthService {
   static Future<bool> isLoggedIn() async {
     _initWebStorage();
     final accessToken = await _getAccessToken();
-    print('Login status - Access Token exists: ${accessToken != null}');
-    return accessToken != null;
+    final storedApiKeyVersion = await _getString(_apiKeyVersionKey);
+    
+    // If no token, not logged in
+    if (accessToken == null) {
+      print('Login status - Access Token exists: false');
+      return false;
+    }
+    
+    // Check if API key has changed - if so, force logout
+    if (storedApiKeyVersion != KiteConfig.apiKey) {
+      print('⚠️ API KEY CHANGED! Stored: $storedApiKeyVersion, Current: ${KiteConfig.apiKey}');
+      print('🔄 AUTO-CLEARING OLD TOKENS...');
+      await logout();
+      return false;
+    }
+    
+    print('Login status - Access Token exists: true');
+    return true;
   }
 
   // Logout
@@ -372,6 +389,7 @@ class KiteOAuthService {
       await _remove(_publicTokenKey);
       await _remove(_userIdKey);
       await _remove(_loginTimeKey);
+      await _remove(_apiKeyVersionKey);
       print('🔓 Logged out - all tokens cleared from localStorage');
     }
   }
@@ -395,7 +413,8 @@ class KiteOAuthService {
     await _setString(_publicTokenKey, publicToken);
     await _setString(_userIdKey, userId);
     await _setString(_loginTimeKey, DateTime.now().toIso8601String());
-    print('Tokens saved successfully');
+    await _setString(_apiKeyVersionKey, KiteConfig.apiKey); // Store which API key was used
+    print('Tokens saved successfully with API key: ${KiteConfig.apiKey}');
   }
 
   static Future<String?> _getAccessToken() async {
