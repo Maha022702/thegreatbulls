@@ -1,0 +1,274 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:http/http.dart' as http;
+import 'dart:html' as html show window;
+import 'kite_config.dart';
+
+class KiteOAuthService {
+  static const String _accessTokenKey = 'access_token';
+  static const String _publicTokenKey = 'public_token';
+  static const String _userIdKey = 'user_id';
+  static const String _loginTimeKey = 'login_time';
+
+  // Web storage
+  static Map<String, String> _webStorage = {};
+
+  // Initialize web storage from localStorage
+  static void _initWebStorage() {
+    if (kIsWeb) {
+      try {
+        final keys = [_accessTokenKey, _publicTokenKey, _userIdKey, _loginTimeKey];
+        for (final key in keys) {
+          if (html.window.localStorage.containsKey(key)) {
+            _webStorage[key] = html.window.localStorage[key]!;
+          }
+        }
+        print('Initialized web storage from localStorage');
+      } catch (e) {
+        print('Failed to initialize web storage: $e');
+      }
+    }
+  }
+
+  // Save to storage
+  static Future<void> _setString(String key, String value) async {
+    _webStorage[key] = value;
+    if (kIsWeb) {
+      try {
+        html.window.localStorage[key] = value;
+        print('Saved to localStorage: $key');
+      } catch (e) {
+        print('Failed to save to localStorage: $e');
+      }
+    }
+  }
+
+  // Get from storage
+  static Future<String?> _getString(String key) async {
+    if (kIsWeb) {
+      try {
+        if (html.window.localStorage.containsKey(key)) {
+          return html.window.localStorage[key];
+        }
+      } catch (e) {
+        print('Failed to read from localStorage: $e');
+      }
+    }
+    return _webStorage[key];
+  }
+
+  // Remove from storage
+  static Future<void> _remove(String key) async {
+    _webStorage.remove(key);
+    if (kIsWeb) {
+      try {
+        html.window.localStorage.remove(key);
+      } catch (e) {
+        print('Failed to remove from localStorage: $e');
+      }
+    }
+  }
+
+  // Get login URL
+  static String getLoginUrl() {
+    final state = DateTime.now().millisecondsSinceEpoch.toString();
+    final redirectUri = Uri.encodeComponent(KiteConfig.redirectUri);
+    return '${KiteConfig.kiteLoginUrl}?v=3&api_key=${KiteConfig.apiKey}&redirect_uri=$redirectUri&state=$state';
+  }
+
+  // Exchange request token for access token via backend
+  static Future<Map<String, dynamic>?> exchangeCodeForToken(String requestToken) async {
+    try {
+      print('Exchanging request token via backend...');
+      print('Request Token: $requestToken');
+      
+      final backendUrl = '${KiteConfig.backendUrl}/api/token';
+      print('Backend URL: $backendUrl');
+
+      final response = await http.post(
+        Uri.parse(backendUrl),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'request_token': requestToken,
+        }),
+      );
+
+      print('Backend response: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        if (data['status'] == 'success') {
+          final accessToken = data['data']['access_token'];
+          final publicToken = data['data']['public_token'];
+          final userId = data['data']['user_id'];
+
+          print('Token exchange successful!');
+          print('User ID: $userId');
+
+          // Save tokens
+          await _saveTokens(accessToken, publicToken, userId);
+
+          return {
+            'access_token': accessToken,
+            'public_token': publicToken,
+            'user_id': userId,
+          };
+        } else {
+          print('Token exchange failed: ${data['error']}');
+          return null;
+        }
+      } else {
+        print('Token exchange HTTP error: ${response.statusCode}');
+        print('Error response: ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('Token exchange error: $e');
+      return null;
+    }
+  }
+
+  // API call helper - goes through backend
+  static Future<Map<String, dynamic>?> _apiGet(String endpoint) async {
+    final accessToken = await _getAccessToken();
+    if (accessToken == null) {
+      print('No access token available');
+      return null;
+    }
+
+    try {
+      final url = '${KiteConfig.backendUrl}$endpoint';
+      print('Calling backend: $url');
+      
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'token ${KiteConfig.apiKey}:$accessToken',
+        },
+      );
+
+      print('API Response: ${response.statusCode}');
+      
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+      print('API Error: ${response.body}');
+      return null;
+    } catch (e) {
+      print('API Error for $endpoint: $e');
+      return null;
+    }
+  }
+
+  // Get user profile
+  static Future<Map<String, dynamic>?> getUserProfile() async {
+    return await _apiGet('/api/user/profile');
+  }
+
+  // Get margins
+  static Future<Map<String, dynamic>?> getMargins() async {
+    return await _apiGet('/api/user/margins');
+  }
+
+  // Get holdings
+  static Future<Map<String, dynamic>?> getHoldings() async {
+    return await _apiGet('/api/portfolio/holdings');
+  }
+
+  // Get orders
+  static Future<Map<String, dynamic>?> getOrders() async {
+    return await _apiGet('/api/orders');
+  }
+
+  // Get positions
+  static Future<Map<String, dynamic>?> getPositions() async {
+    return await _apiGet('/api/portfolio/positions');
+  }
+
+  // Get market quotes
+  static Future<Map<String, dynamic>?> getQuote(String instruments) async {
+    final accessToken = await _getAccessToken();
+    if (accessToken == null) return null;
+
+    try {
+      final url = '${KiteConfig.backendUrl}/api/quote?i=$instruments';
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'token ${KiteConfig.apiKey}:$accessToken',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+      return null;
+    } catch (e) {
+      print('Quote error: $e');
+      return null;
+    }
+  }
+
+  // Get instruments
+  static Future<String?> getInstruments(String exchange) async {
+    try {
+      final url = '${KiteConfig.backendUrl}/api/instruments/$exchange';
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        return response.body;
+      }
+      return null;
+    } catch (e) {
+      print('Instruments error: $e');
+      return null;
+    }
+  }
+
+  // Check if user is logged in
+  static Future<bool> isLoggedIn() async {
+    _initWebStorage();
+    final accessToken = await _getAccessToken();
+    print('Login status - Access Token exists: ${accessToken != null}');
+    return accessToken != null;
+  }
+
+  // Logout
+  static Future<void> logout() async {
+    await _remove(_accessTokenKey);
+    await _remove(_publicTokenKey);
+    await _remove(_userIdKey);
+    await _remove(_loginTimeKey);
+    print('Logged out - tokens cleared');
+  }
+
+  // Debug methods
+  static Future<void> setTestTokensForDebug(String accessToken, String publicToken) async {
+    await _saveTokens(accessToken, publicToken, 'test_user');
+  }
+
+  static Future<String?> getAccessTokenForDebug() async {
+    return await _getAccessToken();
+  }
+
+  static Future<String?> getPublicTokenForDebug() async {
+    return await _getString(_publicTokenKey);
+  }
+
+  // Private methods
+  static Future<void> _saveTokens(String accessToken, String publicToken, String userId) async {
+    await _setString(_accessTokenKey, accessToken);
+    await _setString(_publicTokenKey, publicToken);
+    await _setString(_userIdKey, userId);
+    await _setString(_loginTimeKey, DateTime.now().toIso8601String());
+    print('Tokens saved successfully');
+  }
+
+  static Future<String?> _getAccessToken() async {
+    return await _getString(_accessTokenKey);
+  }
+}
