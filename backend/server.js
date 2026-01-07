@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 const crypto = require('crypto');
+const { KiteConnect } = require('kiteconnect');
 require('dotenv').config();
 
 const app = express();
@@ -312,7 +313,7 @@ app.get('/api/instruments/:exchange', async (req, res) => {
   }
 });
 
-// Historical data
+// Historical data using official Kite Connect SDK
 app.get('/api/instruments/historical/:instrument_token/:interval', async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
@@ -321,28 +322,52 @@ app.get('/api/instruments/historical/:instrument_token/:interval', async (req, r
   }
 
   try {
+    const accessToken = authHeader.replace('token ', '');
     const { instrument_token, interval } = req.params;
-    const { from, to } = req.query;
+    const { from, to, continuous, oi } = req.query;
     
-    const kiteUrl = `${KITE_API_URL}/instruments/historical/${instrument_token}/${interval}?from=${from}&to=${to}`;
-    console.log('📊 Fetching historical data from Kite API:', kiteUrl);
-    console.log('📊 Instrument:', instrument_token, 'Interval:', interval, 'Date range:', from, 'to', to);
+    console.log('📊 Fetching historical data via Kite SDK');
+    console.log('📊 Instrument:', instrument_token, 'Interval:', interval);
+    console.log('📊 Date range:', from, 'to', to);
     
-    const response = await axios.get(kiteUrl, {
-      headers: {
-        'Authorization': authHeader,
-        'X-Kite-Version': '3'
-      }
+    // Initialize Kite Connect with access token
+    const kc = new KiteConnect({
+      api_key: KITE_API_KEY,
+      access_token: accessToken
     });
     
-    console.log('✅ Kite API response received, candles:', response.data?.data?.candles?.length || 0);
-    res.json(response.data);
+    // Fetch historical data using SDK
+    const data = await kc.getHistoricalData(
+      instrument_token,
+      interval,
+      from,
+      to,
+      continuous === 'true' || continuous === '1',
+      oi === 'true' || oi === '1'
+    );
+    
+    console.log('✅ Kite SDK response received, candles:', data?.length || 0);
+    
+    // Transform SDK response to match expected format
+    res.json({
+      status: 'success',
+      data: {
+        candles: data.map(candle => ([
+          candle.date.toISOString(),
+          candle.open,
+          candle.high,
+          candle.low,
+          candle.close,
+          candle.volume,
+          candle.oi || 0
+        ]))
+      }
+    });
   } catch (error) {
-    console.error('❌ Historical data error:', error.response?.data || error.message);
-    console.error('❌ Error status:', error.response?.status);
+    console.error('❌ Historical data error:', error.message);
     res.status(error.response?.status || 500).json({
       error: 'Historical data request failed',
-      details: error.response?.data || error.message
+      details: error.message
     });
   }
 });
