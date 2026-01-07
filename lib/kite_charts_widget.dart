@@ -338,41 +338,25 @@ class _KiteChartViewState extends State<_KiteChartView> {
               console.log(`Fetching data for token: $token, interval: $interval, from: \${fromStr}, to: \${toStr}`);
               console.log(`Access token exists: \${access_token ? 'yes' : 'no'}`);
 
-              // Try multiple backend URLs
-              const backendUrls = [
-                'https://thegreatbulls-backend.onrender.com/api/historical/$token?from='+fromStr+'&to='+toStr+'&interval=$interval',
-                'https://thegreatbulls-api.onrender.com/api/historical/$token?from='+fromStr+'&to='+toStr+'&interval=$interval',
-                'http://localhost:3000/api/historical/$token?from='+fromStr+'&to='+toStr+'&interval=$interval'
-              ];
-
-              let response;
-              let lastError;
+              // Backend URL from config
+              const backendUrl = 'https://kcnpun9kwp.ap-south-1.awsapprunner.com';
+              const apiUrl = `\${backendUrl}/api/instruments/historical/$token/$interval?from=\${fromStr}&to=\${toStr}`;
               
-              for (const url of backendUrls) {
-                try {
-                  console.log('Trying URL:', url);
-                  response = await fetch(url, {
-                    headers: {
-                      'Authorization': 'Bearer ' + access_token,
-                      'Content-Type': 'application/json'
-                    }
-                  });
-                  
-                  if (response.ok) {
-                    console.log('Success with URL:', url);
-                    break;
-                  } else {
-                    console.log('Failed with status:', response.status);
-                    lastError = `HTTP error! status: \${response.status}`;
-                  }
-                } catch (e) {
-                  console.log('Error with URL:', url, e);
-                  lastError = e.message;
-                }
-              }
+              console.log('Fetching from URL:', apiUrl);
 
-              if (!response || !response.ok) {
-                throw new Error(lastError || 'Failed to fetch data from all backends');
+              const response = await fetch(apiUrl, {
+                headers: {
+                  'Authorization': 'token ' + access_token,
+                  'Content-Type': 'application/json'
+                }
+              });
+
+              console.log('Response status:', response.status);
+
+              if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Response error:', errorText);
+                throw new Error(`HTTP error! status: \${response.status}, body: \${errorText}`);
               }
 
               const data = await response.json();
