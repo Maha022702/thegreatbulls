@@ -274,15 +274,21 @@ class _TradingViewChartState extends State<_TradingViewChart> {
                     "theme": "dark",
                     "style": "1",
                     "locale": "en",
+                    "timezone": "Asia/Kolkata",
                     "enable_publishing": false,
                     "hide_top_toolbar": false,
+                    "hide_legend": false,
                     "allow_symbol_change": true,
                     "details": true,
                     "hotlist": true,
-                    "calendar": true
+                    "calendar": true,
+                    "show_popup_button": true,
+                    "popup_width": "1000",
+                    "popup_height": "650"
                   });
                 } catch(e) {
                   console.error('TradingView Error:', e);
+                  document.getElementById('container').innerHTML = '<div style="color: red; padding: 20px; font-weight: bold;">Error loading chart. Symbol: ${widget.symbol}</div>';
                 }
               }
               document.addEventListener('DOMContentLoaded', initChart);
