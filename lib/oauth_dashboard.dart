@@ -324,8 +324,9 @@ class _OAuthDashboardState extends State<OAuthDashboard> {
   String? _error;
 
   // Navigation
-  int _selectedIndex = 0;
+  int _selectedIndex = 1; // Start with Dashboard selected
   final List<String> _navigationItems = [
+    'Home',
     'Dashboard',
     'Trading',
     'Orders',
@@ -337,6 +338,7 @@ class _OAuthDashboardState extends State<OAuthDashboard> {
   ];
 
   final List<IconData> _navigationIcons = [
+    Icons.home,
     Icons.dashboard,
     Icons.trending_up,
     Icons.receipt,
@@ -412,25 +414,34 @@ class _OAuthDashboardState extends State<OAuthDashboard> {
     setState(() {
       _selectedIndex = index;
     });
+
+    // Handle Home navigation
+    if (index == 0) { // Home
+      context.go('/');
+      return;
+    }
   }
 
   Widget _getCurrentPage() {
     switch (_selectedIndex) {
       case 0:
+        // Home - this should not be reached since we navigate away
         return _buildDashboardContent();
       case 1:
-        return _buildTradingContent();
+        return _buildDashboardContent();
       case 2:
-        return _buildOrdersContent();
+        return _buildTradingContent();
       case 3:
-        return _buildPositionsContent();
+        return _buildOrdersContent();
       case 4:
-        return _buildHoldingsContent();
+        return _buildPositionsContent();
       case 5:
-        return _buildPortfolioContent();
+        return _buildHoldingsContent();
       case 6:
-        return _buildWatchlistContent();
+        return _buildPortfolioContent();
       case 7:
+        return _buildWatchlistContent();
+      case 8:
         return _buildAnalyticsContent();
       default:
         return _buildDashboardContent();
@@ -581,22 +592,8 @@ class _OAuthDashboardState extends State<OAuthDashboard> {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  'Place, modify, and cancel orders with advanced trading tools',
+                  'Monitor market data and manage your trading activities',
                   style: TextStyle(color: Colors.white70),
-                ),
-                const SizedBox(height: 20),
-                Center(
-                  child: ElevatedButton.icon(
-                    onPressed: _showOrderDialog,
-                    icon: const Icon(Icons.add, size: 28),
-                    label: const Text('Place New Order'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.amber,
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                      textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ),
                 ),
               ],
             ),
@@ -1038,12 +1035,32 @@ class _OAuthDashboardState extends State<OAuthDashboard> {
 
     return Scaffold(
       backgroundColor: Colors.black,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showOrderDialog,
+        backgroundColor: Colors.amber,
+        foregroundColor: Colors.black,
+        icon: const Icon(Icons.add),
+        label: const Text('Place Order'),
+        elevation: 6,
+      ),
       body: Row(
         children: [
           // Sidebar
           Container(
-            width: 280,
+            width: 300,
             color: Colors.grey[900],
+            decoration: BoxDecoration(
+              border: Border(
+                right: BorderSide(color: Colors.amber.withOpacity(0.3), width: 1),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 10,
+                  offset: const Offset(2, 0),
+                ),
+              ],
+            ),
             child: Column(
               children: [
                 // Header
@@ -1100,14 +1117,17 @@ class _OAuthDashboardState extends State<OAuthDashboard> {
                           ),
                         ),
                         child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                           leading: Icon(
                             _navigationIcons[index],
                             color: isSelected ? Colors.amber : Colors.white70,
+                            size: 28,
                           ),
                           title: Text(
                             _navigationItems[index],
                             style: TextStyle(
                               color: isSelected ? Colors.amber : Colors.white70,
+                              fontSize: 16,
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                             ),
                           ),
