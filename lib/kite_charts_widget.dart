@@ -361,6 +361,7 @@ class _KiteChartViewState extends State<_KiteChartView> {
               
               // Calculate date range (last 100 days)
               // Calculate appropriate date range based on interval
+              const interval = '$interval'; // Store interval as constant
               let daysBack;
               switch (interval) {
                 case 'minute':
@@ -479,7 +480,7 @@ class _KiteChartViewState extends State<_KiteChartView> {
                 height: container.offsetHeight,
                 timeScale: {
                   timeVisible: true,
-                  secondsVisible: '$interval' === 'minute',
+                  secondsVisible: interval === 'minute',
                   borderColor: '#3f3f46',
                 },
                 rightPriceScale: {
