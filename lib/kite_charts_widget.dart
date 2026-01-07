@@ -345,11 +345,11 @@ class _KiteChartViewState extends State<_KiteChartView> {
               const apiUrl = `\${backendUrl}/api/instruments/historical/$token/$interval?from=\${fromStr}&to=\${toStr}`;
               
               console.log('🎯 Live Charts: API URL:', apiUrl);
-              console.log('🎯 Live Charts: Auth header will use token format');
+              console.log('🎯 Live Charts: Auth header format: token ACCESS_TOKEN');
 
               const response = await fetch(apiUrl, {
                 headers: {
-                  'Authorization': 'token ' + apiKey + ':' + access_token,
+                  'Authorization': 'token ' + access_token,
                   'Content-Type': 'application/json'
                 }
               });
