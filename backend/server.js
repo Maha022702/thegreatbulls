@@ -19,7 +19,7 @@ const tokenStore = new Map();
 
 // Middleware
 app.use(cors({
-  origin: [FRONTEND_URL, 'http://localhost:8080', 'http://127.0.0.1:8080'],
+  origin: [FRONTEND_URL, 'http://localhost:8080', 'http://127.0.0.1:8080', 'https://www.thegreatbulls.in', 'https://thegreatbulls.in'],
   credentials: true
 }));
 app.use(express.json());
