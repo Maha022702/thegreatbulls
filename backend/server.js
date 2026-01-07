@@ -372,6 +372,32 @@ app.delete('/api/session', async (req, res) => {
   }
 });
 
+// Yahoo Finance proxy endpoint (bypass CORS)
+app.get('/api/yahoo-finance/chart/:symbol', async (req, res) => {
+  try {
+    const { symbol } = req.params;
+    const { interval = '1d', range = '3mo' } = req.query;
+    
+    console.log(`📊 Fetching Yahoo Finance data: ${symbol}, interval: ${interval}, range: ${range}`);
+    
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${interval}&range=${range}`;
+    
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
+    
+    res.json(response.data);
+  } catch (error) {
+    console.error('Yahoo Finance error:', error.message);
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to fetch Yahoo Finance data',
+      details: error.message
+    });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log('╔════════════════════════════════════════════════════════════╗');

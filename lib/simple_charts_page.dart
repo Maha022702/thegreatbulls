@@ -49,13 +49,13 @@ class _SimpleChartsPageState extends State<SimpleChartsPage> {
     });
 
     try {
-      // Yahoo Finance API (free)
+      // Yahoo Finance via backend proxy (bypass CORS)
       final period = selectedInterval == '1d' ? '3mo' : '1y';
       final url = Uri.parse(
-        'https://query1.finance.yahoo.com/v8/finance/chart/$selectedSymbol?interval=$selectedInterval&range=$period'
+        'https://kcnpun9kwp.ap-south-1.awsapprunner.com/api/yahoo-finance/chart/$selectedSymbol?interval=$selectedInterval&range=$period'
       );
 
-      print('🎯 Fetching from Yahoo Finance: $url');
+      print('🎯 Fetching from backend proxy: $url');
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
