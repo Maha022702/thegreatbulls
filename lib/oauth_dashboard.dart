@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'kite_oauth_service.dart';
+import 'tradingview_widget.dart';
 
 class OrderDialog extends StatefulWidget {
   const OrderDialog({super.key});
@@ -335,6 +336,7 @@ class _OAuthDashboardState extends State<OAuthDashboard> {
     'Portfolio',
     'Watchlist',
     'Analytics',
+    'Charts',
   ];
 
   final List<IconData> _navigationIcons = [
@@ -347,6 +349,7 @@ class _OAuthDashboardState extends State<OAuthDashboard> {
     Icons.pie_chart,
     Icons.visibility,
     Icons.analytics,
+    Icons.candlestick_chart,
   ];
 
   @override
@@ -443,6 +446,8 @@ class _OAuthDashboardState extends State<OAuthDashboard> {
         return _buildWatchlistContent();
       case 8:
         return _buildAnalyticsContent();
+      case 9:
+        return const TradingViewChartPage();
       default:
         return _buildDashboardContent();
     }
