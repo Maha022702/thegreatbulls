@@ -1,5 +1,8 @@
 {
   "buildCommand": "./build.sh",
   "outputDirectory": "build/web",
-  "installCommand": "chmod +x build.sh"
+  "installCommand": "chmod +x build.sh",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
