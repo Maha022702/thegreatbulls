@@ -4,6 +4,7 @@ import 'kite_oauth_service.dart';
 import 'tradingview_widget.dart';
 import 'kite_charts_widget.dart';
 import 'simple_charts_page.dart';
+import 'live_market_data_widget.dart';
 
 class OrderDialog extends StatefulWidget {
   const OrderDialog({super.key});
@@ -453,7 +454,7 @@ class _OAuthDashboardState extends State<OAuthDashboard> {
       case 9:
         return const TradingViewChartPage();
       case 10:
-        return const KiteChartsPage();
+        return const LiveMarketDataWidget();
       default:
         return _buildDashboardContent();
     }
