@@ -2,7 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 const crypto = require('crypto');
-const { KiteConnect } = require('kiteconnect');
+const { KiteConnect, KiteTicker } = require('kiteconnect');
+const WebSocket = require('ws');
 require('dotenv').config();
 
 const app = express();
@@ -426,8 +427,8 @@ app.get('/api/yahoo-finance/chart/:symbol', async (req, res) => {
   }
 });
 
-// Start server
-app.listen(PORT, () => {
+// WebSocket server for live market data streaming
+const server = app.listen(PORT, () => {
   console.log('╔════════════════════════════════════════════════════════════╗');
   console.log('║          🐂 The Great Bulls - Backend Server 🐂           ║');
   console.log('╠════════════════════════════════════════════════════════════╣');
@@ -443,5 +444,138 @@ app.listen(PORT, () => {
   console.log('║  - GET  /api/portfolio/*     - Holdings & Positions        ║');
   console.log('║  - GET  /api/orders          - Orders                      ║');
   console.log('║  - GET  /api/quote           - Market quotes               ║');
+  console.log('║  - WS   /live                - Live market data stream     ║');
   console.log('╚════════════════════════════════════════════════════════════╝');
 });
+
+// WebSocket server for live ticks
+const wss = new WebSocket.Server({ server, path: '/live' });
+
+// Store active ticker connections
+const activeTickerConnections = new Map();
+
+wss.on('connection', (ws, req) => {
+  console.log('📡 New WebSocket client connected');
+  
+  let ticker = null;
+  let accessToken = null;
+  let subscribedTokens = [];
+
+  ws.on('message', (message) => {
+    try {
+      const data = JSON.parse(message);
+      console.log('📨 Received message:', data.type);
+
+      if (data.type === 'init') {
+        // Initialize Kite Ticker with access token
+        accessToken = data.accessToken;
+        
+        if (!accessToken) {
+          ws.send(JSON.stringify({ type: 'error', message: 'Access token required' }));
+          return;
+        }
+
+        console.log('🔌 Initializing KiteTicker...');
+        ticker = new KiteTicker({
+          api_key: KITE_API_KEY,
+          access_token: accessToken
+        });
+
+        ticker.on('ticks', (ticks) => {
+          // Forward ticks to WebSocket client
+          ws.send(JSON.stringify({
+            type: 'ticks',
+            data: ticks
+          }));
+        });
+
+        ticker.on('connect', () => {
+          console.log('✅ KiteTicker connected');
+          ws.send(JSON.stringify({ type: 'status', message: 'Connected to market data' }));
+        });
+
+        ticker.on('disconnect', () => {
+          console.log('❌ KiteTicker disconnected');
+          ws.send(JSON.stringify({ type: 'status', message: 'Disconnected from market data' }));
+        });
+
+        ticker.on('error', (error) => {
+          console.error('❌ KiteTicker error:', error);
+          ws.send(JSON.stringify({ type: 'error', message: error.message || 'Ticker error' }));
+        });
+
+        ticker.on('reconnect', (reconnectCount, reconnectInterval) => {
+          console.log(`🔄 Reconnecting... (attempt ${reconnectCount}, interval: ${reconnectInterval}ms)`);
+        });
+
+        ticker.on('order_update', (order) => {
+          console.log('📝 Order update:', order);
+          ws.send(JSON.stringify({ type: 'order_update', data: order }));
+        });
+
+        // Connect ticker
+        ticker.connect();
+        activeTickerConnections.set(ws, ticker);
+        
+      } else if (data.type === 'subscribe') {
+        // Subscribe to instrument tokens
+        if (!ticker) {
+          ws.send(JSON.stringify({ type: 'error', message: 'Ticker not initialized' }));
+          return;
+        }
+
+        const tokens = data.tokens || [];
+        console.log('📊 Subscribing to tokens:', tokens);
+        
+        ticker.subscribe(tokens);
+        ticker.setMode(ticker.modeFull, tokens); // Get full mode (OHLC, volume, etc.)
+        subscribedTokens = tokens;
+        
+        ws.send(JSON.stringify({ 
+          type: 'subscribed', 
+          tokens: tokens,
+          message: `Subscribed to ${tokens.length} instruments`
+        }));
+        
+      } else if (data.type === 'unsubscribe') {
+        // Unsubscribe from tokens
+        if (!ticker) return;
+        
+        const tokens = data.tokens || subscribedTokens;
+        console.log('📴 Unsubscribing from tokens:', tokens);
+        
+        ticker.unsubscribe(tokens);
+        subscribedTokens = subscribedTokens.filter(t => !tokens.includes(t));
+        
+        ws.send(JSON.stringify({ 
+          type: 'unsubscribed', 
+          tokens: tokens 
+        }));
+      }
+    } catch (error) {
+      console.error('❌ Error processing message:', error);
+      ws.send(JSON.stringify({ type: 'error', message: error.message }));
+    }
+  });
+
+  ws.on('close', () => {
+    console.log('📡 WebSocket client disconnected');
+    
+    // Cleanup ticker
+    if (ticker) {
+      try {
+        ticker.disconnect();
+      } catch (e) {
+        console.error('Error disconnecting ticker:', e);
+      }
+      activeTickerConnections.delete(ws);
+    }
+  });
+
+  ws.on('error', (error) => {
+    console.error('❌ WebSocket error:', error);
+  });
+});
+
+console.log('📡 WebSocket server ready on /live');
+
