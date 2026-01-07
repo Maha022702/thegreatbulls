@@ -164,6 +164,41 @@ class KiteOAuthService {
     }
   }
 
+  // API call helper for POST requests
+  static Future<Map<String, dynamic>?> _apiPost(String endpoint, Map<String, dynamic> data) async {
+    final accessToken = await _getAccessToken();
+    if (accessToken == null) {
+      print('No access token available');
+      return null;
+    }
+
+    try {
+      final url = '${KiteConfig.backendUrl}$endpoint';
+      print('POST to backend: $url');
+      print('Data: $data');
+      
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'token ${KiteConfig.apiKey}:$accessToken',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(data),
+      );
+
+      print('POST Response: ${response.statusCode}');
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return json.decode(response.body);
+      }
+      print('POST Error: ${response.body}');
+      return null;
+    } catch (e) {
+      print('POST Error for $endpoint: $e');
+      return null;
+    }
+  }
+
   // Get user profile
   static Future<Map<String, dynamic>?> getUserProfile() async {
     return await _apiGet('/api/user/profile');
@@ -182,6 +217,77 @@ class KiteOAuthService {
   // Get orders
   static Future<Map<String, dynamic>?> getOrders() async {
     return await _apiGet('/api/orders');
+  }
+
+  // Place an order
+  static Future<Map<String, dynamic>?> placeOrder({
+    required String variety,
+    required String exchange,
+    required String tradingsymbol,
+    required String transactionType, // BUY or SELL
+    required String orderType, // MARKET, LIMIT, SL, SL-M
+    required String product, // CNC, MIS, NRML
+    required int quantity,
+    double? price,
+    double? triggerPrice,
+  }) async {
+    final orderData = {
+      'variety': variety,
+      'exchange': exchange,
+      'tradingsymbol': tradingsymbol,
+      'transaction_type': transactionType,
+      'order_type': orderType,
+      'product': product,
+      'quantity': quantity,
+    };
+
+    if (price != null) orderData['price'] = price;
+    if (triggerPrice != null) orderData['trigger_price'] = triggerPrice;
+
+    return await _apiPost('/api/orders/$variety', orderData);
+  }
+
+  // Modify an order
+  static Future<Map<String, dynamic>?> modifyOrder({
+    required String variety,
+    required String orderId,
+    int? quantity,
+    double? price,
+    double? triggerPrice,
+    String? orderType,
+  }) async {
+    final updateData = <String, dynamic>{};
+    if (quantity != null) updateData['quantity'] = quantity;
+    if (price != null) updateData['price'] = price;
+    if (triggerPrice != null) updateData['trigger_price'] = triggerPrice;
+    if (orderType != null) updateData['order_type'] = orderType;
+
+    return await _apiPost('/api/orders/$variety/$orderId', updateData);
+  }
+
+  // Cancel an order
+  static Future<Map<String, dynamic>?> cancelOrder(String variety, String orderId) async {
+    final accessToken = await _getAccessToken();
+    if (accessToken == null) return null;
+
+    try {
+      final url = '${KiteConfig.backendUrl}/api/orders/$variety/$orderId';
+      final response = await http.delete(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'token ${KiteConfig.apiKey}:$accessToken',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+      print('Cancel order error: ${response.body}');
+      return null;
+    } catch (e) {
+      print('Cancel order error: $e');
+      return null;
+    }
   }
 
   // Get positions

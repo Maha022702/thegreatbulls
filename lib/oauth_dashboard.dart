@@ -2,6 +2,302 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'kite_oauth_service.dart';
 
+class OrderDialog extends StatefulWidget {
+  const OrderDialog({super.key});
+
+  @override
+  State<OrderDialog> createState() => _OrderDialogState();
+}
+
+class _OrderDialogState extends State<OrderDialog> {
+  final _formKey = GlobalKey<FormState>();
+  String _variety = 'regular';
+  String _exchange = 'NSE';
+  final _tradingsymbolController = TextEditingController();
+  String _transactionType = 'BUY';
+  String _orderType = 'MARKET';
+  String _product = 'CNC';
+  final _quantityController = TextEditingController();
+  final _priceController = TextEditingController();
+  final _triggerPriceController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: Colors.grey[900],
+      title: const Text(
+        'Place Order',
+        style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold),
+      ),
+      content: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Variety
+              DropdownButtonFormField<String>(
+                value: _variety,
+                decoration: const InputDecoration(
+                  labelText: 'Variety',
+                  labelStyle: TextStyle(color: Colors.white),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.amber),
+                  ),
+                ),
+                dropdownColor: Colors.grey[800],
+                style: const TextStyle(color: Colors.white),
+                items: const [
+                  DropdownMenuItem(value: 'regular', child: Text('Regular')),
+                  DropdownMenuItem(value: 'bo', child: Text('Bracket Order')),
+                  DropdownMenuItem(value: 'co', child: Text('Cover Order')),
+                  DropdownMenuItem(value: 'iceberg', child: Text('Iceberg')),
+                  DropdownMenuItem(value: 'auction', child: Text('Auction')),
+                ],
+                onChanged: (value) => setState(() => _variety = value!),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Exchange
+              DropdownButtonFormField<String>(
+                value: _exchange,
+                decoration: const InputDecoration(
+                  labelText: 'Exchange',
+                  labelStyle: TextStyle(color: Colors.white),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.amber),
+                  ),
+                ),
+                dropdownColor: Colors.grey[800],
+                style: const TextStyle(color: Colors.white),
+                items: const [
+                  DropdownMenuItem(value: 'NSE', child: Text('NSE')),
+                  DropdownMenuItem(value: 'BSE', child: Text('BSE')),
+                  DropdownMenuItem(value: 'MCX', child: Text('MCX')),
+                  DropdownMenuItem(value: 'NCDEX', child: Text('NCDEX')),
+                ],
+                onChanged: (value) => setState(() => _exchange = value!),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Trading Symbol
+              TextFormField(
+                controller: _tradingsymbolController,
+                decoration: const InputDecoration(
+                  labelText: 'Trading Symbol (e.g., RELIANCE)',
+                  labelStyle: TextStyle(color: Colors.white),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.amber),
+                  ),
+                ),
+                style: const TextStyle(color: Colors.white),
+                validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+              ),
+
+              const SizedBox(height: 16),
+
+              // Transaction Type
+              DropdownButtonFormField<String>(
+                value: _transactionType,
+                decoration: const InputDecoration(
+                  labelText: 'Transaction Type',
+                  labelStyle: TextStyle(color: Colors.white),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.amber),
+                  ),
+                ),
+                dropdownColor: Colors.grey[800],
+                style: const TextStyle(color: Colors.white),
+                items: const [
+                  DropdownMenuItem(value: 'BUY', child: Text('BUY')),
+                  DropdownMenuItem(value: 'SELL', child: Text('SELL')),
+                ],
+                onChanged: (value) => setState(() => _transactionType = value!),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Order Type
+              DropdownButtonFormField<String>(
+                value: _orderType,
+                decoration: const InputDecoration(
+                  labelText: 'Order Type',
+                  labelStyle: TextStyle(color: Colors.white),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.amber),
+                  ),
+                ),
+                dropdownColor: Colors.grey[800],
+                style: const TextStyle(color: Colors.white),
+                items: const [
+                  DropdownMenuItem(value: 'MARKET', child: Text('MARKET')),
+                  DropdownMenuItem(value: 'LIMIT', child: Text('LIMIT')),
+                  DropdownMenuItem(value: 'SL', child: Text('STOP LOSS')),
+                  DropdownMenuItem(value: 'SL-M', child: Text('STOP LOSS MARKET')),
+                ],
+                onChanged: (value) => setState(() => _orderType = value!),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Product
+              DropdownButtonFormField<String>(
+                value: _product,
+                decoration: const InputDecoration(
+                  labelText: 'Product',
+                  labelStyle: TextStyle(color: Colors.white),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.amber),
+                  ),
+                ),
+                dropdownColor: Colors.grey[800],
+                style: const TextStyle(color: Colors.white),
+                items: const [
+                  DropdownMenuItem(value: 'CNC', child: Text('CNC (Delivery)')),
+                  DropdownMenuItem(value: 'MIS', child: Text('MIS (Intraday)')),
+                  DropdownMenuItem(value: 'NRML', child: Text('NRML (Normal)')),
+                ],
+                onChanged: (value) => setState(() => _product = value!),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Quantity
+              TextFormField(
+                controller: _quantityController,
+                decoration: const InputDecoration(
+                  labelText: 'Quantity',
+                  labelStyle: TextStyle(color: Colors.white),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.amber),
+                  ),
+                ),
+                style: const TextStyle(color: Colors.white),
+                keyboardType: TextInputType.number,
+                validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+              ),
+
+              const SizedBox(height: 16),
+
+              // Price (for LIMIT orders)
+              if (_orderType == 'LIMIT')
+                TextFormField(
+                  controller: _priceController,
+                  decoration: const InputDecoration(
+                    labelText: 'Price',
+                    labelStyle: TextStyle(color: Colors.white),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.amber),
+                    ),
+                  ),
+                  style: const TextStyle(color: Colors.white),
+                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                ),
+
+              // Trigger Price (for SL/SL-M orders)
+              if (_orderType == 'SL' || _orderType == 'SL-M')
+                TextFormField(
+                  controller: _triggerPriceController,
+                  decoration: const InputDecoration(
+                    labelText: 'Trigger Price',
+                    labelStyle: TextStyle(color: Colors.white),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.amber),
+                    ),
+                  ),
+                  style: const TextStyle(color: Colors.white),
+                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+          child: const Text('Cancel', style: TextStyle(color: Colors.white)),
+        ),
+        ElevatedButton(
+          onPressed: _isLoading ? null : _placeOrder,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.amber,
+            foregroundColor: Colors.black,
+          ),
+          child: _isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Place Order'),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _placeOrder() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final result = await KiteOAuthService.placeOrder(
+        variety: _variety,
+        exchange: _exchange,
+        tradingsymbol: _tradingsymbolController.text.trim().toUpperCase(),
+        transactionType: _transactionType,
+        orderType: _orderType,
+        product: _product,
+        quantity: int.parse(_quantityController.text),
+        price: _priceController.text.isNotEmpty ? double.parse(_priceController.text) : null,
+        triggerPrice: _triggerPriceController.text.isNotEmpty ? double.parse(_triggerPriceController.text) : null,
+      );
+
+      if (result != null && result['status'] == 'success') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Order placed successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pop();
+        // Refresh data
+        if (context.mounted) {
+          context.findAncestorStateOfType<_OAuthDashboardState>()?._loadAllData();
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to place order: ${result?['error'] ?? 'Unknown error'}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error placing order: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _tradingsymbolController.dispose();
+    _quantityController.dispose();
+    _priceController.dispose();
+    _triggerPriceController.dispose();
+    super.dispose();
+  }
+}
+
 class OAuthDashboard extends StatefulWidget {
   const OAuthDashboard({super.key});
 
@@ -132,6 +428,12 @@ class _OAuthDashboardState extends State<OAuthDashboard> {
             tooltip: 'Logout',
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showOrderDialog,
+        backgroundColor: Colors.amber,
+        child: const Icon(Icons.add, color: Colors.black),
+        tooltip: 'Place Order',
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -567,6 +869,13 @@ class _OAuthDashboardState extends State<OAuthDashboard> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showOrderDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => const OrderDialog(),
     );
   }
 }
