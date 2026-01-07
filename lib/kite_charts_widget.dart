@@ -311,23 +311,42 @@ class _KiteChartViewState extends State<_KiteChartView> {
           <div id="info">Loading chart...</div>
         </div>
         <script>
+          console.log('🎯 Live Charts: Script loaded');
+          
           async function initChart() {
             try {
+              console.log('🎯 Live Charts: initChart started');
+              document.getElementById('info').innerHTML = 'Initializing chart...';
+              
               // Get access token from localStorage
+              console.log('🎯 Live Charts: Checking localStorage for kite_tokens');
               const tokens = localStorage.getItem('kite_tokens');
+              
               if (!tokens) {
-                document.getElementById('info').innerHTML = 'Error: Not authenticated. Please login first.';
-                console.error('No tokens in localStorage');
+                const msg = 'Error: Not authenticated. Please login first.';
+                document.getElementById('info').innerHTML = msg;
+                document.getElementById('chart').innerHTML = '<div style="color: red; padding: 20px;">' + msg + '</div>';
+                console.error('🎯 Live Charts: No tokens in localStorage');
+                console.log('🎯 Live Charts: Available keys:', Object.keys(localStorage));
                 return;
               }
 
-              const { access_token } = JSON.parse(tokens);
+              console.log('🎯 Live Charts: Tokens found:', tokens.substring(0, 50) + '...');
+              const tokenData = JSON.parse(tokens);
+              const { access_token } = tokenData;
               
               if (!access_token) {
-                document.getElementById('info').innerHTML = 'Error: Invalid token. Please login again.';
-                console.error('No access token found');
+                const msg = 'Error: Invalid token. Please login again.';
+                document.getElementById('info').innerHTML = msg;
+                document.getElementById('chart').innerHTML = '<div style="color: red; padding: 20px;">' + msg + '</div>';
+                console.error('🎯 Live Charts: No access_token in parsed data');
+                console.log('🎯 Live Charts: Token data keys:', Object.keys(tokenData));
                 return;
               }
+              
+              console.log('🎯 Live Charts: Access token exists, length:', access_token.length);
+              
+              console.log('🎯 Live Charts: Access token exists, length:', access_token.length);
               
               // Calculate date range (last 100 days)
               const today = new Date();
@@ -336,14 +355,15 @@ class _KiteChartViewState extends State<_KiteChartView> {
               const fromStr = fromDate.toISOString().split('T')[0];
               const toStr = today.toISOString().split('T')[0];
 
-              console.log(`Fetching data for token: $token, interval: $interval, from: \${fromStr}, to: \${toStr}`);
-              console.log(`Access token exists: \${access_token ? 'yes' : 'no'}`);
+              console.log(`🎯 Live Charts: Fetching data for token: $token, interval: $interval, from: \${fromStr}, to: \${toStr}`);
+              document.getElementById('info').innerHTML = 'Fetching data from Kite API...';
 
               // Backend URL from config
               const backendUrl = 'https://kcnpun9kwp.ap-south-1.awsapprunner.com';
               const apiUrl = `\${backendUrl}/api/instruments/historical/$token/$interval?from=\${fromStr}&to=\${toStr}`;
               
-              console.log('Fetching from URL:', apiUrl);
+              console.log('🎯 Live Charts: API URL:', apiUrl);
+              console.log('🎯 Live Charts: Auth header will use token format');
 
               const response = await fetch(apiUrl, {
                 headers: {
@@ -352,25 +372,35 @@ class _KiteChartViewState extends State<_KiteChartView> {
                 }
               });
 
-              console.log('Response status:', response.status);
+              console.log('🎯 Live Charts: Response status:', response.status);
 
               if (!response.ok) {
                 const errorText = await response.text();
-                console.error('Response error:', errorText);
+                console.error('🎯 Live Charts: Response error:', errorText);
+                document.getElementById('info').innerHTML = 'Error: HTTP ' + response.status;
+                document.getElementById('chart').innerHTML = '<div style="color: red; padding: 20px;">Error: ' + response.status + ' - ' + errorText + '</div>';
                 throw new Error(`HTTP error! status: \${response.status}, body: \${errorText}`);
               }
 
               const data = await response.json();
-              console.log('Response data:', data);
+              console.log('🎯 Live Charts: Response data received');
+              console.log('🎯 Live Charts: Data keys:', Object.keys(data));
               
               if (!data.data || !data.data.candles) {
-                throw new Error('No candle data received. Response: ' + JSON.stringify(data));
+                const msg = 'No candle data received. Response: ' + JSON.stringify(data);
+                console.error('🎯 Live Charts:', msg);
+                document.getElementById('info').innerHTML = 'Error: No data';
+                document.getElementById('chart').innerHTML = '<div style="color: red; padding: 20px;">' + msg + '</div>';
+                throw new Error(msg);
               }
 
-              console.log('Candles count:', data.data.candles.length);
+              console.log('🎯 Live Charts: Candles count:', data.data.candles.length);
+              document.getElementById('info').innerHTML = 'Rendering chart with ' + data.data.candles.length + ' candles...';
 
               // Create chart
               const container = document.getElementById('chart');
+              console.log('🎯 Live Charts: Creating chart in container');
+              
               const chart = LightweightCharts.createChart(container, {
                 layout: {
                   background: { color: '#1a1a1a' },
@@ -442,10 +472,12 @@ class _KiteChartViewState extends State<_KiteChartView> {
 
               // Update info
               const latest = candleData[candleData.length - 1];
-              document.getElementById('info').innerHTML = 
-                'Symbol: $symbol | Last Price: ₹' + latest.close.toFixed(2) + 
+              const infoText = 'Symbol: $symbol | Last Price: ₹' + latest.close.toFixed(2) + 
                 ' | High: ₹' + latest.high.toFixed(2) + 
                 ' | Low: ₹' + latest.low.toFixed(2);
+              document.getElementById('info').innerHTML = infoText;
+              console.log('🎯 Live Charts: Chart rendered successfully!');
+              console.log('🎯 Live Charts: Latest candle:', latest);
 
               // Responsive
               window.addEventListener('resize', () => {
@@ -455,18 +487,26 @@ class _KiteChartViewState extends State<_KiteChartView> {
               });
 
             } catch (error) {
-              console.error('Chart error:', error);
-              console.error('Error stack:', error.stack);
+              console.error('🎯 Live Charts: Chart error:', error);
+              console.error('🎯 Live Charts: Error stack:', error.stack);
               document.getElementById('container').innerHTML = 
                 '<div class="error">Error loading chart:<br>' + 
-                '<small>' + error.message + '</small></div>';
+                '<small>' + error.message + '</small><br><br>' +
+                '<small>Check console for details (F12)</small></div>';
               document.getElementById('info').innerHTML = 
-                'Error: ' + error.message + ' (Check browser console for details)';
+                'Error: ' + error.message;
             }
           }
 
-          document.addEventListener('DOMContentLoaded', initChart);
-          setTimeout(initChart, 500);
+          console.log('🎯 Live Charts: Adding event listeners');
+          document.addEventListener('DOMContentLoaded', () => {
+            console.log('🎯 Live Charts: DOMContentLoaded fired');
+            initChart();
+          });
+          setTimeout(() => {
+            console.log('🎯 Live Charts: Timeout fired');
+            initChart();
+          }, 500);
         </script>
       </body>
       </html>
