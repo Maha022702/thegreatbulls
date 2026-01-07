@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'kite_oauth_service.dart';
 import 'tradingview_widget.dart';
 import 'kite_charts_widget.dart';
+import 'simple_charts_page.dart';
 
 class OrderDialog extends StatefulWidget {
   const OrderDialog({super.key});
@@ -452,7 +453,7 @@ class _OAuthDashboardState extends State<OAuthDashboard> {
       case 9:
         return const TradingViewChartPage();
       case 10:
-        return const KiteChartsPage();
+        return const SimpleChartsPage();
       default:
         return _buildDashboardContent();
     }
