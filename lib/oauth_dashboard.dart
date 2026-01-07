@@ -517,9 +517,9 @@ class _OAuthDashboardState extends State<OAuthDashboard> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             children: [
-              _buildStatCard('Total Orders', _orders?.length.toString() ?? '0', Icons.receipt),
-              _buildStatCard('Open Positions', _positions?.length.toString() ?? '0', Icons.trending_up),
-              _buildStatCard('Holdings', _holdings?.length.toString() ?? '0', Icons.account_balance_wallet),
+              _buildStatCard('Total Orders', (_orders?['data'] as List?)?.length.toString() ?? '0', Icons.receipt),
+              _buildStatCard('Open Positions', (_positions?['data']?['net'] as List?)?.length.toString() ?? '0', Icons.trending_up),
+              _buildStatCard('Holdings', (_holdings?['data'] as List?)?.length.toString() ?? '0', Icons.account_balance_wallet),
               _buildStatCard('Margin Available', _margins?['net']?.toStringAsFixed(2) ?? '0.00', Icons.account_balance),
             ],
           ),
