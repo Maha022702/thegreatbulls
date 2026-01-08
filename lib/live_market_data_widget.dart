@@ -445,55 +445,139 @@ class _LiveMarketDataWidgetState extends State<LiveMarketDataWidget> {
               return;
             }
             
-            updateStatus('Connecting...', 'connecting');
+            updateStatus('Connecting to Kite...', 'connecting');
             
-            ws = new WebSocket('wss://kcnpun9kwp.ap-south-1.awsapprunner.com/live');
+            // Connect DIRECTLY to Kite's WebSocket server
+            const apiKey = 'j3xfcw2nl5v4lx3v';
+            const wsUrl = 'wss://ws.kite.trade?api_key=' + apiKey + '&access_token=' + accessToken;
+            
+            console.log('🔌 Connecting to Kite WebSocket...');
+            ws = new WebSocket(wsUrl);
+            ws.binaryType = 'arraybuffer'; // Kite sends binary data
             
             ws.onopen = () => {
-              console.log('✅ Connected to WebSocket');
-              updateStatus('Connected', 'connected');
+              console.log('✅ Connected to Kite WebSocket!');
+              updateStatus('Connected to Kite', 'connected');
               
-              // Initialize
-              ws.send(JSON.stringify({
-                type: 'init',
-                accessToken: accessToken
-              }));
+              // Subscribe to all stock tokens
+              const tokens = stocks.map(s => s.token);
+              const subscribeMsg = JSON.stringify({ a: 'subscribe', v: tokens });
+              ws.send(subscribeMsg);
+              console.log('📊 Subscribed to', tokens.length, 'instruments');
               
-              // Subscribe to all stocks
+              // Set mode to 'full' for complete data
               setTimeout(() => {
-                const tokens = stocks.map(s => s.token);
-                ws.send(JSON.stringify({
-                  type: 'subscribe',
-                  tokens: tokens
-                }));
-                console.log('📊 Subscribed to', tokens.length, 'stocks');
-              }, 1000);
+                const modeMsg = JSON.stringify({ a: 'mode', v: ['full', tokens] });
+                ws.send(modeMsg);
+                console.log('📊 Set mode to full');
+              }, 500);
             };
             
             ws.onmessage = (event) => {
-              try {
-                const message = JSON.parse(event.data);
+              // Check if it's binary data (market quotes) or text (status messages)
+              if (event.data instanceof ArrayBuffer) {
+                // Parse binary market data from Kite
+                const buffer = event.data;
+                if (buffer.byteLength < 2) return; // Heartbeat or empty
                 
-                if (message.type === 'status') {
-                  console.log('Status:', message.message);
-                } else if (message.type === 'ticks' && message.data) {
-                  message.data.forEach(tick => updateStock(tick));
+                const dataView = new DataView(buffer);
+                const numberOfPackets = dataView.getInt16(0);
+                
+                let offset = 2;
+                for (let i = 0; i < numberOfPackets; i++) {
+                  if (offset + 2 > buffer.byteLength) break;
+                  
+                  const packetLength = dataView.getInt16(offset);
+                  offset += 2;
+                  
+                  if (offset + packetLength > buffer.byteLength) break;
+                  
+                  // Parse the packet based on length
+                  const tick = parseTickPacket(dataView, offset, packetLength);
+                  if (tick) {
+                    updateStock(tick);
+                  }
+                  
+                  offset += packetLength;
                 }
-              } catch (e) {
-                console.error('Error processing message:', e);
+              } else {
+                // Text message (JSON) - status/error messages
+                try {
+                  const message = JSON.parse(event.data);
+                  console.log('📨 Kite message:', message);
+                  if (message.type === 'error') {
+                    console.error('Kite error:', message.data);
+                    updateStatus('Error: ' + message.data, 'disconnected');
+                  }
+                } catch (e) {
+                  console.log('Text message:', event.data);
+                }
               }
             };
             
             ws.onerror = (error) => {
-              console.error('WebSocket error:', error);
-              updateStatus('Error', 'disconnected');
+              console.error('❌ Kite WebSocket error:', error);
+              updateStatus('Connection Error', 'disconnected');
             };
             
-            ws.onclose = () => {
-              console.log('WebSocket closed, reconnecting...');
-              updateStatus('Reconnecting...', 'connecting');
-              setTimeout(connectWebSocket, 5000);
+            ws.onclose = (event) => {
+              console.log('📡 Kite WebSocket closed:', event.code, event.reason);
+              updateStatus('Disconnected', 'disconnected');
+              
+              // Reconnect after 5 seconds if not intentional close
+              if (event.code !== 1000) {
+                console.log('🔄 Reconnecting in 5 seconds...');
+                setTimeout(connectWebSocket, 5000);
+              }
             };
+          }
+          
+          // Parse Kite's binary tick packet
+          function parseTickPacket(dataView, offset, length) {
+            try {
+              const instrumentToken = dataView.getInt32(offset);
+              
+              // LTP mode (8 bytes) - just instrument token + LTP
+              if (length === 8) {
+                return {
+                  instrument_token: instrumentToken,
+                  last_price: dataView.getInt32(offset + 4) / 100,
+                  mode: 'ltp'
+                };
+              }
+              
+              // Quote mode (44 bytes) or Full mode (184 bytes)
+              const tick = {
+                instrument_token: instrumentToken,
+                last_price: dataView.getInt32(offset + 4) / 100,
+                last_quantity: dataView.getInt32(offset + 8),
+                average_price: dataView.getInt32(offset + 12) / 100,
+                volume: dataView.getInt32(offset + 16),
+                buy_quantity: dataView.getInt32(offset + 20),
+                sell_quantity: dataView.getInt32(offset + 24),
+                ohlc: {
+                  open: dataView.getInt32(offset + 28) / 100,
+                  high: dataView.getInt32(offset + 32) / 100,
+                  low: dataView.getInt32(offset + 36) / 100,
+                  close: dataView.getInt32(offset + 40) / 100
+                },
+                mode: length >= 184 ? 'full' : 'quote'
+              };
+              
+              // Full mode has additional data
+              if (length >= 184) {
+                tick.last_trade_time = new Date(dataView.getInt32(offset + 44) * 1000);
+                tick.oi = dataView.getInt32(offset + 48);
+                tick.oi_day_high = dataView.getInt32(offset + 52);
+                tick.oi_day_low = dataView.getInt32(offset + 56);
+                tick.exchange_timestamp = new Date(dataView.getInt32(offset + 60) * 1000);
+              }
+              
+              return tick;
+            } catch (e) {
+              console.error('Error parsing tick:', e);
+              return null;
+            }
           }
           
           // Initialize
