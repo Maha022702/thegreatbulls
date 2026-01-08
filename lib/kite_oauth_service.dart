@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import 'dart:html' as html show window;
+import 'package:crypto/crypto.dart';
 import 'kite_config.dart';
 
 class KiteOAuthService {
@@ -77,17 +78,15 @@ class KiteOAuthService {
     return '${KiteConfig.kiteLoginUrl}?v=3&api_key=${KiteConfig.apiKey}&redirect_uri=$redirectUri&state=$state';
   }
 
-  // Exchange request token for access token via backend
+  // Exchange request token for access token via AWS Lambda (bypasses CORS)
   static Future<Map<String, dynamic>?> exchangeCodeForToken(String requestToken) async {
     try {
-      print('Exchanging request token via backend...');
+      print('Exchanging request token via AWS Lambda...');
       print('Request Token: $requestToken');
-      
-      final backendUrl = '${KiteConfig.backendUrl}/api/token';
-      print('Backend URL: $backendUrl');
+      print('Lambda URL: ${KiteConfig.tokenExchangeUrl}');
 
       final response = await http.post(
-        Uri.parse(backendUrl),
+        Uri.parse(KiteConfig.tokenExchangeUrl),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -96,7 +95,7 @@ class KiteOAuthService {
         }),
       );
 
-      print('Backend response: ${response.statusCode}');
+      print('Lambda response: ${response.statusCode}');
       print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
@@ -119,7 +118,7 @@ class KiteOAuthService {
             'user_id': userId,
           };
         } else {
-          print('Token exchange failed: ${data['error']}');
+          print('Token exchange failed: ${data['message']}');
           return null;
         }
       } else {
@@ -133,7 +132,7 @@ class KiteOAuthService {
     }
   }
 
-  // API call helper - goes through backend
+  // API call helper - direct to Kite API
   static Future<Map<String, dynamic>?> _apiGet(String endpoint) async {
     final accessToken = await _getAccessToken();
     if (accessToken == null) {
@@ -142,13 +141,14 @@ class KiteOAuthService {
     }
 
     try {
-      final url = '${KiteConfig.backendUrl}$endpoint';
-      print('Calling backend: $url');
+      final url = '${KiteConfig.kiteApiUrl}$endpoint';
+      print('Calling Kite API: $url');
       
       final response = await http.get(
         Uri.parse(url),
         headers: {
           'Authorization': 'token ${KiteConfig.apiKey}:$accessToken',
+          'X-Kite-Version': '3',
         },
       );
 
@@ -165,7 +165,7 @@ class KiteOAuthService {
     }
   }
 
-  // API call helper for POST requests
+  // API call helper for POST requests - direct to Kite API
   static Future<Map<String, dynamic>?> _apiPost(String endpoint, Map<String, dynamic> data) async {
     final accessToken = await _getAccessToken();
     if (accessToken == null) {
@@ -174,8 +174,8 @@ class KiteOAuthService {
     }
 
     try {
-      final url = '${KiteConfig.backendUrl}$endpoint';
-      print('POST to backend: $url');
+      final url = '${KiteConfig.kiteApiUrl}$endpoint';
+      print('POST to Kite API: $url');
       print('Data: $data');
       
       final response = await http.post(
@@ -183,6 +183,7 @@ class KiteOAuthService {
         headers: {
           'Authorization': 'token ${KiteConfig.apiKey}:$accessToken',
           'Content-Type': 'application/json',
+          'X-Kite-Version': '3',
         },
         body: json.encode(data),
       );
@@ -202,22 +203,22 @@ class KiteOAuthService {
 
   // Get user profile
   static Future<Map<String, dynamic>?> getUserProfile() async {
-    return await _apiGet('/api/user/profile');
+    return await _apiGet('/user/profile');
   }
 
   // Get margins
   static Future<Map<String, dynamic>?> getMargins() async {
-    return await _apiGet('/api/user/margins');
+    return await _apiGet('/user/margins');
   }
 
   // Get holdings
   static Future<Map<String, dynamic>?> getHoldings() async {
-    return await _apiGet('/api/portfolio/holdings');
+    return await _apiGet('/portfolio/holdings');
   }
 
   // Get orders
   static Future<Map<String, dynamic>?> getOrders() async {
-    return await _apiGet('/api/orders');
+    return await _apiGet('/orders');
   }
 
   // Place an order
@@ -245,7 +246,7 @@ class KiteOAuthService {
     if (price != null) orderData['price'] = price;
     if (triggerPrice != null) orderData['trigger_price'] = triggerPrice;
 
-    return await _apiPost('/api/orders/$variety', orderData);
+    return await _apiPost('/orders/$variety', orderData);
   }
 
   // Modify an order
@@ -263,7 +264,7 @@ class KiteOAuthService {
     if (triggerPrice != null) updateData['trigger_price'] = triggerPrice;
     if (orderType != null) updateData['order_type'] = orderType;
 
-    return await _apiPost('/api/orders/$variety/$orderId', updateData);
+    return await _apiPost('/orders/$variety/$orderId', updateData);
   }
 
   // Cancel an order
@@ -272,11 +273,12 @@ class KiteOAuthService {
     if (accessToken == null) return null;
 
     try {
-      final url = '${KiteConfig.backendUrl}/api/orders/$variety/$orderId';
+      final url = '${KiteConfig.kiteApiUrl}/orders/$variety/$orderId';
       final response = await http.delete(
         Uri.parse(url),
         headers: {
           'Authorization': 'token ${KiteConfig.apiKey}:$accessToken',
+          'X-Kite-Version': '3',
         },
       );
 
@@ -293,7 +295,7 @@ class KiteOAuthService {
 
   // Get positions
   static Future<Map<String, dynamic>?> getPositions() async {
-    return await _apiGet('/api/portfolio/positions');
+    return await _apiGet('/portfolio/positions');
   }
 
   // Get market quotes
@@ -302,11 +304,12 @@ class KiteOAuthService {
     if (accessToken == null) return null;
 
     try {
-      final url = '${KiteConfig.backendUrl}/api/quote?i=$instruments';
+      final url = '${KiteConfig.kiteApiUrl}/quote?i=$instruments';
       final response = await http.get(
         Uri.parse(url),
         headers: {
           'Authorization': 'token ${KiteConfig.apiKey}:$accessToken',
+          'X-Kite-Version': '3',
         },
       );
 
@@ -323,7 +326,7 @@ class KiteOAuthService {
   // Get instruments
   static Future<String?> getInstruments(String exchange) async {
     try {
-      final url = '${KiteConfig.backendUrl}/api/instruments/$exchange';
+      final url = '${KiteConfig.kiteApiUrl}/instruments/$exchange';
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
@@ -365,26 +368,27 @@ class KiteOAuthService {
     try {
       final accessToken = await _getAccessToken();
       
-      // Call backend to invalidate token on Kite servers
+      // Call Kite API to invalidate token
       if (accessToken != null) {
-        final url = '${KiteConfig.backendUrl}/api/session';
+        final url = '${KiteConfig.kiteApiUrl}/session/token';
         final response = await http.delete(
           Uri.parse(url),
           headers: {
-            'Authorization': 'token $accessToken',
+            'Authorization': 'token ${KiteConfig.apiKey}:$accessToken',
+            'X-Kite-Version': '3',
           },
         );
         
         if (response.statusCode == 200) {
-          print('✅ Session invalidated on backend');
+          print('✅ Session invalidated on Kite');
         } else {
-          print('⚠️ Backend logout error: ${response.body}');
+          print('⚠️ Kite logout error: ${response.body}');
         }
       }
     } catch (e) {
-      print('⚠️ Logout backend call failed: $e');
+      print('⚠️ Logout API call failed: $e');
     } finally {
-      // Always clear local storage regardless of backend response
+      // Always clear local storage regardless of API response
       await _remove(_accessTokenKey);
       await _remove(_publicTokenKey);
       await _remove(_userIdKey);

@@ -11,6 +11,6 @@ class KiteConfig {
   static const String appName = 'TheGreatbulls';
   static const String clientId = 'ZLE384';
   
-  // Backend server URL - AWS App Runner
-  static const String backendUrl = 'https://kcnpun9kwp.ap-south-1.awsapprunner.com';
+  // AWS API Gateway for token exchange
+  static const String tokenExchangeUrl = 'https://s23gqm7047.execute-api.ap-south-1.amazonaws.com/prod/token';
 }

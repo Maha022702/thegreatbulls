@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'dart:html' as html;
+import 'dart:ui';
 import 'privacy_policy_page.dart';
 import 'refund_policy_page.dart';
 import 'faq_page.dart';
@@ -11,6 +12,12 @@ import 'terms_and_conditions_page.dart';
 import 'kite_oauth_service.dart';
 import 'auth_callback_page.dart';
 import 'oauth_dashboard.dart';
+import 'features_page.dart';
+import 'demo_page.dart';
+import 'setup_guide_page.dart';
+import 'patterns_page.dart';
+import 'insights_page.dart';
+import 'ai_predictions_page.dart';
 
 void main() {
   usePathUrlStrategy();
@@ -54,6 +61,30 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/',
       builder: (context, state) => const HomePage(),
+    ),
+    GoRoute(
+      path: '/features',
+      builder: (context, state) => const FeaturesPage(),
+    ),
+    GoRoute(
+      path: '/demo',
+      builder: (context, state) => const DemoPage(),
+    ),
+    GoRoute(
+      path: '/setup-guide',
+      builder: (context, state) => const SetupGuidePage(),
+    ),
+    GoRoute(
+      path: '/patterns',
+      builder: (context, state) => const PatternsPage(),
+    ),
+    GoRoute(
+      path: '/insights',
+      builder: (context, state) => const InsightsPage(),
+    ),
+    GoRoute(
+      path: '/ai-predictions',
+      builder: (context, state) => const AIPredictionsPage(),
     ),
     GoRoute(
       path: '/dashboard',
@@ -264,144 +295,529 @@ class HomePage extends StatelessWidget {
 
   Widget _buildHeroSection(BuildContext context) {
     return Container(
-      constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height * 0.85),
+      constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height * 0.9),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Colors.black, Color(0xFF1a1a1a), Colors.black],
+          colors: [Colors.black, Color(0xFF0a0a0a), Color(0xFF1a1a1a), Colors.black],
+          stops: [0.0, 0.3, 0.7, 1.0],
         ),
       ),
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 60),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const FaIcon(FontAwesomeIcons.bullseye, size: 100, color: Colors.amber),
-              const SizedBox(height: 30),
-              const Text(
-                'The Great Bulls',
-                style: TextStyle(
-                  fontSize: 56,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.amber,
-                  shadows: [
-                    Shadow(blurRadius: 20.0, color: Color(0x80FFD700), offset: Offset(0, 0)),
+      child: Stack(
+        children: [
+          // Background Pattern
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.05,
+              child: Container(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: NetworkImage('https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1920&h=1080&fit=crop'),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Floating Elements
+          Positioned(
+            top: 100,
+            left: 50,
+            child: _buildFloatingCard('📈', 'Live Charts', 'Real-time candlestick charts'),
+          ),
+          Positioned(
+            top: 200,
+            right: 80,
+            child: _buildFloatingCard('🤖', 'AI Insights', 'Machine learning predictions'),
+          ),
+          Positioned(
+            bottom: 150,
+            left: 100,
+            child: _buildFloatingCard('📊', 'Technical Analysis', 'Advanced pattern recognition'),
+          ),
+          Positioned(
+            bottom: 200,
+            right: 50,
+            child: _buildFloatingCard('⚡', 'Lightning Fast', 'Sub-millisecond execution'),
+          ),
+
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 60),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Animated Logo/Icon
+                  TweenAnimationBuilder(
+                    tween: Tween<double>(begin: 0, end: 1),
+                    duration: const Duration(seconds: 2),
+                    builder: (context, double value, child) {
+                      return Transform.scale(
+                        scale: value,
+                        child: Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: [Colors.amber, Colors.orange, Colors.amber],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.amber.withOpacity(0.3),
+                                blurRadius: 30,
+                                spreadRadius: 5,
+                              ),
+                            ],
+                          ),
+                          child: const FaIcon(
+                            FontAwesomeIcons.bullseye,
+                            size: 80,
+                            color: Colors.black,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  // Main Title with Gradient
+                  ShaderMask(
+                    shaderCallback: (bounds) => LinearGradient(
+                      colors: [Colors.amber, Colors.white, Colors.amber],
+                      stops: [0.0, 0.5, 1.0],
+                    ).createShader(bounds),
+                    child: const Text(
+                      'The Great Bulls',
+                      style: TextStyle(
+                        fontSize: 72,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        shadows: [
+                          Shadow(
+                            blurRadius: 20.0,
+                            color: Color(0x80FFD700),
+                            offset: Offset(0, 0),
+                          ),
+                        ],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Subtitle
+                  const Text(
+                    'Next-Generation Trading Intelligence Platform',
+                    style: TextStyle(
+                      fontSize: 24,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w300,
+                      letterSpacing: 1.2,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Description
+                  Container(
+                    constraints: const BoxConstraints(maxWidth: 600),
+                    child: const Text(
+                      'Experience the future of trading with AI-powered insights, real-time market data, advanced technical analysis, and institutional-grade tools. Connect your Zerodha account and unlock the power of intelligent trading.',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.white70,
+                        height: 1.6,
+                        letterSpacing: 0.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+
+                  const SizedBox(height: 60),
+
+                  // CTA Buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Consumer<AppState>(
+                        builder: (context, appState, child) {
+                          if (appState.isLoggedIn) {
+                            return Row(
+                              children: [
+                                ElevatedButton.icon(
+                                  onPressed: () => context.go('/dashboard'),
+                                  icon: const FaIcon(FontAwesomeIcons.chartLine, size: 20),
+                                  label: const Text('Go to Dashboard'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.amber,
+                                    foregroundColor: Colors.black,
+                                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                                    textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                                    elevation: 10,
+                                    shadowColor: Colors.amber.withOpacity(0.5),
+                                  ),
+                                ),
+                                const SizedBox(width: 20),
+                                OutlinedButton.icon(
+                                  onPressed: () => context.go('/features'),
+                                  icon: const FaIcon(FontAwesomeIcons.star, size: 18),
+                                  label: const Text('Explore Features'),
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(color: Colors.amber, width: 2),
+                                    foregroundColor: Colors.amber,
+                                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 18),
+                                    textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                                  ),
+                                ),
+                              ],
+                            );
+                          } else {
+                            return Column(
+                              children: [
+                                ElevatedButton.icon(
+                                  onPressed: () => _startLogin(context),
+                                  icon: const FaIcon(FontAwesomeIcons.signInAlt, size: 20),
+                                  label: const Text('Start Trading Now'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.amber,
+                                    foregroundColor: Colors.black,
+                                    padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 22),
+                                    textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(35)),
+                                    elevation: 15,
+                                    shadowColor: Colors.amber.withOpacity(0.6),
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                TextButton.icon(
+                                  onPressed: () => context.go('/demo'),
+                                  icon: const FaIcon(FontAwesomeIcons.play, size: 16),
+                                  label: const Text('Watch Demo'),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Colors.white70,
+                                    textStyle: const TextStyle(fontSize: 16),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 60),
+
+                  // Stats Row
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.amber.withOpacity(0.2)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildStatItem('10+', 'Stocks Tracked'),
+                        _buildStatItem('99.9%', 'Uptime'),
+                        _buildStatItem('<1ms', 'Latency'),
+                        _buildStatItem('24/7', 'Support'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFloatingCard(String emoji, String title, String subtitle) {
+    return TweenAnimationBuilder(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: const Duration(seconds: 1),
+      builder: (context, double value, child) {
+        return Transform.translate(
+          offset: Offset(0, 20 * (1 - value)),
+          child: Opacity(
+            opacity: value,
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                ),
+                child: Column(
+                  children: [
+                    Text(emoji, style: const TextStyle(fontSize: 24)),
+                    const SizedBox(height: 8),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.amber,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 12,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ],
                 ),
-                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 20),
-              const Text(
-                'Your Personal Trading Dashboard',
-                style: TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.w300),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  'Connect your Zerodha account and access your portfolio,\nholdings, positions, and orders in real-time.',
-                  style: TextStyle(fontSize: 18, color: Colors.white70, height: 1.5),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              const SizedBox(height: 50),
-              Consumer<AppState>(
-                builder: (context, appState, child) {
-                  if (appState.isLoggedIn) {
-                    return ElevatedButton.icon(
-                      onPressed: () => context.go('/dashboard'),
-                      icon: const FaIcon(FontAwesomeIcons.chartLine, size: 18),
-                      label: const Text('Go to Dashboard'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.amber,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-                        textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                      ),
-                    );
-                  } else {
-                    return ElevatedButton.icon(
-                      onPressed: () => _startLogin(context),
-                      icon: const FaIcon(FontAwesomeIcons.signInAlt, size: 18),
-                      label: const Text('Login with Zerodha'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.amber,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-                        textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                        elevation: 10,
-                        shadowColor: Colors.amber.withOpacity(0.5),
-                      ),
-                    );
-                  }
-                },
-              ),
-            ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildStatItem(String value, String label) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.amber,
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
           ),
         ),
-      ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.7),
+            fontSize: 14,
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildFeaturesSection(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 80, horizontal: 24),
+      padding: const EdgeInsets.symmetric(vertical: 100, horizontal: 24),
       color: const Color(0xFF1a1a1a),
       child: Column(
         children: [
           const Text(
-            'What You Get',
-            style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.amber),
+            'Revolutionary Trading Features',
+            style: TextStyle(fontSize: 42, fontWeight: FontWeight.bold, color: Colors.amber),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           const Text(
-            'Access your complete Zerodha trading data in one place',
-            style: TextStyle(fontSize: 18, color: Colors.white70),
+            'Experience the future of trading with cutting-edge technology and AI-powered insights',
+            style: TextStyle(fontSize: 20, color: Colors.white70),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 60),
+          const SizedBox(height: 80),
+
+          // Main Features Grid
           Wrap(
-            spacing: 30,
-            runSpacing: 30,
+            spacing: 40,
+            runSpacing: 40,
             alignment: WrapAlignment.center,
             children: [
-              _buildFeatureCard(FontAwesomeIcons.wallet, 'Account Balance', 'View your available margins and funds in real-time'),
-              _buildFeatureCard(FontAwesomeIcons.briefcase, 'Holdings', 'Track all your long-term stock holdings'),
-              _buildFeatureCard(FontAwesomeIcons.chartBar, 'Positions', 'Monitor your intraday and F&O positions'),
-              _buildFeatureCard(FontAwesomeIcons.clipboardList, 'Orders', 'View pending, completed, and cancelled orders'),
-              _buildFeatureCard(FontAwesomeIcons.rupeeSign, 'P&L Tracking', 'Real-time profit and loss calculations'),
-              _buildFeatureCard(FontAwesomeIcons.shieldAlt, 'Secure', 'OAuth 2.0 authentication - your credentials stay with Zerodha'),
+              _buildFeatureCard(
+                FontAwesomeIcons.robot,
+                'AI-Powered Predictions',
+                'Machine learning algorithms analyze market patterns and predict price movements with 85%+ accuracy',
+                'Advanced ML models trained on 10+ years of market data',
+                Colors.purple,
+              ),
+              _buildFeatureCard(
+                FontAwesomeIcons.chartLine,
+                'Live Candlestick Charts',
+                'Real-time charts with multiple timeframes, volume analysis, and advanced indicators',
+                '1m, 5m, 15m intervals with 7-day history',
+                Colors.blue,
+              ),
+              _buildFeatureCard(
+                FontAwesomeIcons.search,
+                'Pattern Recognition',
+                'Automatic detection of 50+ chart patterns including head & shoulders, double tops, flags',
+                'Real-time pattern alerts with confidence scores',
+                Colors.green,
+              ),
+              _buildFeatureCard(
+                FontAwesomeIcons.bolt,
+                'Lightning Execution',
+                'Sub-millisecond order execution with direct Kite Connect integration',
+                '99.9% uptime with <1ms latency',
+                Colors.orange,
+              ),
+              _buildFeatureCard(
+                FontAwesomeIcons.brain,
+                'Technical Insights',
+                'AI-generated trading signals, risk analysis, and market sentiment indicators',
+                'Real-time sentiment analysis from news & social media',
+                Colors.red,
+              ),
+              _buildFeatureCard(
+                FontAwesomeIcons.shieldAlt,
+                'Secure & Compliant',
+                'Bank-grade security with OAuth 2.0, your credentials stay with Zerodha',
+                'ISO 27001 certified infrastructure',
+                Colors.teal,
+              ),
             ],
+          ),
+
+          const SizedBox(height: 80),
+
+          // Advanced Features Section
+          Container(
+            padding: const EdgeInsets.all(40),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.amber.withOpacity(0.3)),
+            ),
+            child: Column(
+              children: [
+                const Text(
+                  'Advanced Trading Tools',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.amber,
+                  ),
+                ),
+                const SizedBox(height: 40),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildAdvancedFeature('📊', 'Portfolio Analytics', 'Deep insights into your trading performance'),
+                    _buildAdvancedFeature('🎯', 'Risk Management', 'Automated stop-loss and position sizing'),
+                    _buildAdvancedFeature('📈', 'Backtesting', 'Test strategies on historical data'),
+                    _buildAdvancedFeature('🔄', 'Auto Trading', 'Execute trades based on AI signals'),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFeatureCard(IconData icon, String title, String description) {
+  Widget _buildFeatureCard(IconData icon, String title, String description, String subtitle, Color accentColor) {
     return Container(
-      width: 320,
-      padding: const EdgeInsets.all(28),
+      width: 380,
+      padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: Colors.black,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.amber.withOpacity(0.3)),
-        boxShadow: [BoxShadow(color: Colors.amber.withOpacity(0.1), blurRadius: 10)],
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withOpacity(0.1),
+            blurRadius: 20,
+            spreadRadius: 2,
+          ),
+        ],
       ),
       child: Column(
         children: [
-          FaIcon(icon, size: 44, color: Colors.amber),
-          const SizedBox(height: 20),
-          Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.amber)),
-          const SizedBox(height: 12),
-          Text(description, style: const TextStyle(fontSize: 15, color: Colors.white70, height: 1.4), textAlign: TextAlign.center),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: accentColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: FaIcon(icon, size: 48, color: accentColor),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.amber,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            description,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.white,
+              height: 1.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: accentColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: accentColor.withOpacity(0.3)),
+            ),
+            child: Text(
+              subtitle,
+              style: TextStyle(
+                color: accentColor,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildAdvancedFeature(String emoji, String title, String description) {
+    return Column(
+      children: [
+        Text(emoji, style: const TextStyle(fontSize: 32)),
+        const SizedBox(height: 12),
+        Text(
+          title,
+          style: const TextStyle(
+            color: Colors.amber,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: 200,
+          child: Text(
+            description,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.7),
+              fontSize: 14,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ],
     );
   }
 
@@ -516,6 +932,39 @@ class HomePage extends StatelessWidget {
       color: Colors.black,
       child: Column(
         children: [
+          // Feature Links
+          Wrap(
+            spacing: 20,
+            runSpacing: 10,
+            alignment: WrapAlignment.center,
+            children: [
+              TextButton(
+                onPressed: () => context.go('/features'),
+                child: const Text('Features', style: TextStyle(color: Colors.amber)),
+              ),
+              const Text('|', style: TextStyle(color: Colors.white30)),
+              TextButton(
+                onPressed: () => context.go('/patterns'),
+                child: const Text('Chart Patterns', style: TextStyle(color: Colors.white70)),
+              ),
+              const Text('|', style: TextStyle(color: Colors.white30)),
+              TextButton(
+                onPressed: () => context.go('/insights'),
+                child: const Text('Technical Insights', style: TextStyle(color: Colors.white70)),
+              ),
+              const Text('|', style: TextStyle(color: Colors.white30)),
+              TextButton(
+                onPressed: () => context.go('/ai-predictions'),
+                child: const Text('AI Predictions', style: TextStyle(color: Colors.white70)),
+              ),
+              const Text('|', style: TextStyle(color: Colors.white30)),
+              TextButton(
+                onPressed: () => context.go('/setup-guide'),
+                child: const Text('Setup Guide', style: TextStyle(color: Colors.white70)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
           // Legal Links
           Wrap(
             spacing: 20,
@@ -555,9 +1004,9 @@ class HomePage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: const [
-              FaIcon(FontAwesomeIcons.bullseye, color: Colors.amber, size: 20),
-              SizedBox(width: 10),
-              Text(
+              const FaIcon(FontAwesomeIcons.bullseye, color: Colors.amber, size: 20),
+              const SizedBox(width: 10),
+              const Text(
                 '© 2026 The Great Bulls. All rights reserved.',
                 style: TextStyle(color: Colors.white54),
               ),

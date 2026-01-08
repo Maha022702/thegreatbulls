@@ -2,29 +2,39 @@
 
 **Elite Stock Market Intelligence Platform**
 
-A world-class Flutter web application that delivers sophisticated stock market analysis, AI-powered predictions, and premium investment insights. Designed with luxury and innovation at its core, The Great Bulls empowers investors with cutting-edge tools and expert guidance.
+A world-class Flutter web application that delivers sophisticated stock market analysis with real-time NSE data via Kite Connect WebSocket. Features live candlestick charts with persistent data storage.
+
+## 🏗️ Architecture
+
+- **Frontend**: Flutter Web (Vercel) - https://thegreatbulls.in
+- **Data Source**: Kite Connect WebSocket API (direct connection)
+- **Storage**: IndexedDB (browser-based, persists candle data for 7 days)
+- **Charts**: Lightweight Charts v4 (candlestick + volume)
 
 ## ✨ Key Features
 
-### 🎯 Advanced Analytics
-- Real-time market data visualization
-- Interactive Syncfusion charts
-- Comprehensive trend analysis
+### 📊 Live Market Data
+- Real-time WebSocket connection to Kite Trade
+- 10 NSE stocks: RELIANCE, TCS, INFY, SBIN, HDFC, ITC, BAJFINANCE, WIPRO, MARUTI, ASIANPAINT
+- Live price updates with change % indicators
+- OHLC, Volume, Buy/Sell Qty stats
 
-### 🤖 AI-Powered Insights
-- Machine learning-driven predictions
-- Risk assessment algorithms
-- Intelligent market forecasting
+### 📈 Candlestick Charts
+- **1m, 5m, 15m** interval candles
+- Real-time candle aggregation from ticks
+- Persistent storage via IndexedDB
+- Volume histogram overlay
+- Professional trading UI
+
+### 🎯 Advanced Analytics
+- Interactive Syncfusion charts
+- Trend analysis tools
+- Risk assessment indicators
 
 ### 👑 Premium Experience
 - Dark luxury theme with amber accents
 - Responsive design for all devices
-- Seamless subscription management
-
-### 🌟 Exclusive Content
-- Expert market predictions
-- Community insights
-- 24/7 premium support
+- Seamless Kite OAuth integration
 
 ## 🚀 Getting Started
 
