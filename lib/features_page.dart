@@ -63,6 +63,36 @@ class FeaturesPage extends StatelessWidget {
               ),
             ),
 
+            // Elite Value Snapshot
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: Colors.amber.withOpacity(0.25)),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.35), blurRadius: 18, offset: const Offset(0, 10)),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text(
+                      'Built for elite, latency-sensitive traders',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.amber),
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      'Single cockpit for AI signals, real-time execution, and compliance-friendly logging. Zero fluff—every module is actionable and measurable.',
+                      style: TextStyle(color: Colors.white70, height: 1.5),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
             // Features Grid
             Container(
               padding: const EdgeInsets.all(40),

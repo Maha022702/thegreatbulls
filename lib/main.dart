@@ -9,6 +9,7 @@ import 'privacy_policy_page.dart';
 import 'refund_policy_page.dart';
 import 'faq_page.dart';
 import 'terms_and_conditions_page.dart';
+import 'kite_config.dart';
 import 'kite_oauth_service.dart';
 import 'auth_callback_page.dart';
 import 'oauth_dashboard.dart';
@@ -181,6 +182,12 @@ class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   void _startLogin(BuildContext context) {
+    if (KiteConfig.apiKey.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Missing KITE_API_KEY. Set it via --dart-define before deploying.')),
+      );
+      return;
+    }
     final loginUrl = KiteOAuthService.getLoginUrl();
     print('🔐 Starting login: $loginUrl');
     html.window.location.href = loginUrl;
@@ -188,107 +195,219 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final showSidePanel = screenWidth > 1100;
+
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          // Top Navigation Bar
-          SliverAppBar(
-            floating: true,
-            pinned: true,
-            backgroundColor: Colors.black.withOpacity(0.95),
-            elevation: 0,
-            expandedHeight: 60,
-            title: GestureDetector(
-              onTap: () => context.go('/'),
-              child: Row(
-                children: const [
-                  FaIcon(FontAwesomeIcons.bullseye, color: Colors.amber, size: 28),
-                  SizedBox(width: 12),
-                  Text(
-                    'The Great Bulls',
-                    style: TextStyle(
-                      color: Colors.amber,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 22,
+      body: Stack(
+        children: [
+          CustomScrollView(
+            slivers: [
+              // Top Navigation Bar
+              SliverAppBar(
+                floating: true,
+                pinned: true,
+                backgroundColor: Colors.black.withOpacity(0.85),
+                elevation: 0,
+                expandedHeight: 64,
+                flexibleSpace: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.black.withOpacity(0.8), Colors.black.withOpacity(0.6)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
+                  ),
+                ),
+                title: GestureDetector(
+                  onTap: () => context.go('/'),
+                  child: Row(
+                    children: const [
+                      FaIcon(FontAwesomeIcons.bullseye, color: Colors.amber, size: 28),
+                      SizedBox(width: 12),
+                      Text(
+                        'The Great Bulls',
+                        style: TextStyle(
+                          color: Colors.amber,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 22,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  Consumer<AppState>(
+                    builder: (context, appState, child) {
+                      if (appState.isLoggedIn) {
+                        return Row(
+                          children: [
+                            TextButton.icon(
+                              onPressed: () => context.go('/dashboard'),
+                              icon: const FaIcon(FontAwesomeIcons.chartLine, color: Colors.white, size: 16),
+                              label: const Text('Dashboard', style: TextStyle(color: Colors.white)),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.withOpacity(0.18),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: Colors.amber.withOpacity(0.4)),
+                              ),
+                              child: Row(
+                                children: [
+                                  const FaIcon(FontAwesomeIcons.user, color: Colors.amber, size: 14),
+                                  const SizedBox(width: 8),
+                                  Text(appState.userName, style: const TextStyle(color: Colors.amber)),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            TextButton.icon(
+                              onPressed: () async {
+                                await appState.logout();
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Logged out successfully')),
+                                  );
+                                }
+                              },
+                              icon: const FaIcon(FontAwesomeIcons.rightFromBracket, color: Colors.redAccent, size: 16),
+                              label: const Text('Logout', style: TextStyle(color: Colors.redAccent)),
+                            ),
+                            const SizedBox(width: 16),
+                          ],
+                        );
+                      } else {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 16),
+                          child: ElevatedButton.icon(
+                            onPressed: () => _startLogin(context),
+                            icon: const FaIcon(FontAwesomeIcons.rightToBracket, size: 16),
+                            label: const Text('Login with Zerodha'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.amber,
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              shadowColor: Colors.amberAccent,
+                              elevation: 8,
+                            ),
+                          ),
+                        );
+                      }
+                    },
                   ),
                 ],
               ),
-            ),
-            actions: [
-              Consumer<AppState>(
-                builder: (context, appState, child) {
-                  if (appState.isLoggedIn) {
-                    return Row(
-                      children: [
-                        TextButton.icon(
-                          onPressed: () => context.go('/dashboard'),
-                          icon: const FaIcon(FontAwesomeIcons.chartLine, color: Colors.white, size: 16),
-                          label: const Text('Dashboard', style: TextStyle(color: Colors.white)),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.amber.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            children: [
-                              const FaIcon(FontAwesomeIcons.user, color: Colors.amber, size: 14),
-                              const SizedBox(width: 8),
-                              Text(appState.userName, style: const TextStyle(color: Colors.amber)),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        TextButton.icon(
-                          onPressed: () async {
-                            await appState.logout();
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Logged out successfully')),
-                              );
-                            }
-                          },
-                          icon: const FaIcon(FontAwesomeIcons.signOutAlt, color: Colors.redAccent, size: 16),
-                          label: const Text('Logout', style: TextStyle(color: Colors.redAccent)),
-                        ),
-                        const SizedBox(width: 16),
-                      ],
-                    );
-                  } else {
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 16),
-                      child: ElevatedButton.icon(
-                        onPressed: () => _startLogin(context),
-                        icon: const FaIcon(FontAwesomeIcons.signInAlt, size: 16),
-                        label: const Text('Login with Zerodha'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.amber,
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                        ),
-                      ),
-                    );
-                  }
-                },
+              // Page Content
+              SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    _buildHeroSection(context),
+                    _buildFeaturesSection(context),
+                    _buildHowItWorksSection(context),
+                    _buildCtaSection(context),
+                    _buildFooter(context),
+                  ],
+                ),
               ),
             ],
           ),
-          // Page Content
-          SliverToBoxAdapter(
-            child: Column(
-              children: [
-                _buildHeroSection(context),
-                _buildFeaturesSection(context),
-                _buildHowItWorksSection(context),
-                _buildCtaSection(context),
-                _buildFooter(context),
-              ],
-            ),
-          ),
+          _buildQuickNav(context, showSidePanel),
         ],
+      ),
+    );
+  }
+
+  Widget _buildQuickNav(BuildContext context, bool showSidePanel) {
+    final items = [
+      ('Features', '/features', FontAwesomeIcons.gem),
+      ('Patterns', '/patterns', FontAwesomeIcons.shapes),
+      ('Insights', '/insights', FontAwesomeIcons.lightbulb),
+      ('AI Predictions', '/ai-predictions', FontAwesomeIcons.robot),
+      ('Setup', '/setup-guide', FontAwesomeIcons.wandSparkles),
+      ('FAQ', '/faq', FontAwesomeIcons.circleQuestion),
+      ('Privacy', '/privacy-policy', FontAwesomeIcons.userShield),
+      ('Refund', '/refund-policy', FontAwesomeIcons.rotateLeft),
+      ('Terms', '/terms-and-conditions', FontAwesomeIcons.fileContract),
+    ];
+
+    final glass = ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.06),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.white.withOpacity(0.15)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 24,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
+          child: showSidePanel
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: items
+                      .map(
+                        (item) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: TextButton.icon(
+                            onPressed: () => context.go(item.$2),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            icon: FaIcon(item.$3, size: 16, color: Colors.amberAccent),
+                            label: Text(item.$1, style: const TextStyle(color: Colors.white, fontSize: 14)),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                )
+              : Row(
+                  children: items
+                      .map(
+                        (item) => Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: ActionChip(
+                            backgroundColor: Colors.white.withOpacity(0.08),
+                            side: BorderSide(color: Colors.white.withOpacity(0.12)),
+                            avatar: FaIcon(item.$3, size: 14, color: Colors.amberAccent),
+                            label: Text(item.$1, style: const TextStyle(color: Colors.white)),
+                            onPressed: () => context.go(item.$2),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+        ),
+      ),
+    );
+
+    if (showSidePanel) {
+      return Positioned(
+        top: 120,
+        right: 18,
+        child: SizedBox(width: 220, child: glass),
+      );
+    }
+
+    return Positioned(
+      top: 90,
+      left: 12,
+      right: 12,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: glass,
       ),
     );
   }

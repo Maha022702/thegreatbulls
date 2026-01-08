@@ -20,7 +20,7 @@ class FaqPage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const Text(
-            '1. What can you give us?',
+            '1. What does The Great Bulls offer?',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -29,12 +29,12 @@ class FaqPage extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'The course will teach you or improve your trading knowledge in simple technical strategy and also provide coded indicators, you can learn and trade in short time period.',
+            'AI-powered insights, chart pattern detection, live market data, and guided setup so you can trade confidently without juggling multiple tools.',
             style: TextStyle(color: Colors.white),
           ),
           const SizedBox(height: 16),
           const Text(
-            '2. This Membership is for Lifetime?',
+            '2. Is my Kite API key/secret visible to others?',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -43,12 +43,12 @@ class FaqPage extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'No, This membership valid for 181 days, After that, you shall renew the membership to retain access to all past and new videos.',
+            'No. Keys are provided via your environment during build; secrets are never shown in the UI. Authentication happens directly with Zerodha.',
             style: TextStyle(color: Colors.white),
           ),
           const SizedBox(height: 16),
           const Text(
-            '3. This Course is not for Beginners?',
+            '3. Do I need trading experience?',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -57,12 +57,12 @@ class FaqPage extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'No, It\'s also Beginners to buy, It help you to learn and trade in simple technical strategy.',
+            'We are beginner-friendly with guided onboarding, while advanced users get granular analytics and automation-ready insights.',
             style: TextStyle(color: Colors.white),
           ),
           const SizedBox(height: 16),
           const Text(
-            '4. Which Language you can teach?',
+            '4. Which markets are supported?',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -71,12 +71,12 @@ class FaqPage extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Combined Tamil and English Languages',
+            'Optimized for NSE via Zerodha Kite Connect. More exchanges will be added based on demand.',
             style: TextStyle(color: Colors.white),
           ),
           const SizedBox(height: 16),
           const Text(
-            '5. Do you provide Calls?',
+            '5. Do you send trade calls?',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -85,7 +85,7 @@ class FaqPage extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'We Don\'t Provide calls, we can share charts this is more enough for you to take your own trades.',
+            'We deliver data, signals, and risk frameworks so you stay in control. No unsolicited tips or auto-trades.',
             style: TextStyle(color: Colors.white),
           ),
         ],

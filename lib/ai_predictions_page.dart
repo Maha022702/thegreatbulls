@@ -122,6 +122,25 @@ class _AIPredictionsPageState extends State<AIPredictionsPage> with TickerProvid
                 ),
               ),
 
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                child: Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.amber.withOpacity(0.25)),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 10)),
+                    ],
+                  ),
+                  child: const Text(
+                    'Signals are confidence-weighted with risk guidance, not just green/red tags. Expect rationale, time horizon, and risk bands with every prediction.',
+                    style: TextStyle(color: Colors.white70, height: 1.5),
+                  ),
+                ),
+              ),
+
               // AI Predictions Content
               Container(
                 padding: const EdgeInsets.all(40),

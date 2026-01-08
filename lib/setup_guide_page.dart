@@ -153,8 +153,8 @@ class SetupGuidePage extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        _buildApiDetail('API Key', 'j3xfcw2nl5v4lx3v', 'Your unique application identifier'),
-                        _buildApiDetail('API Secret', 'd2jx1v3z138wb51njixjy4vtq55otooj', 'Keep this secret - never share it!'),
+                        _buildApiDetail('API Key', 'Set via KITE_API_KEY (dart-define)', 'Generated in Kite Connect console'),
+                        _buildApiDetail('API Secret', 'Never shown in-app', 'Keep private in your backend or environment'),
                         _buildApiDetail('Redirect URL', 'https://www.thegreatbulls.in/auth/callback', 'OAuth callback endpoint'),
                         _buildApiDetail('Supported Products', 'CNC, MIS, NRML', 'Available trading products'),
                         _buildApiDetail('Rate Limits', '10 requests/second', 'API rate limiting'),
@@ -236,7 +236,7 @@ class SetupGuidePage extends StatelessWidget {
                           '• Your Zerodha credentials are never stored on our servers\n'
                           '• All authentication happens directly with Zerodha\'s secure servers\n'
                           '• We only access the data you explicitly grant permission for\n'
-                          '• Your API secret is encrypted and stored securely\n'
+                          '• API secrets stay in your environment/back-end, never displayed in the app\n'
                           '• All data transmission is encrypted using HTTPS/TLS',
                           style: TextStyle(
                             color: Colors.white,

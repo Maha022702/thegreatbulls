@@ -61,6 +61,26 @@ class InsightsPage extends StatelessWidget {
               ),
             ),
 
+            // Context block
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              child: Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.amber.withOpacity(0.25)),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 10)),
+                  ],
+                ),
+                child: const Text(
+                  'Every signal is explainable: we combine momentum, volatility, sentiment, and liquidity filters so you know why a setup is firing—no black boxes.',
+                  style: TextStyle(color: Colors.white70, height: 1.5),
+                ),
+              ),
+            ),
+
             // Insights Content
             Container(
               padding: const EdgeInsets.all(40),

@@ -4,6 +4,7 @@ import 'dart:ui_web' as ui;
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'kite_config.dart';
 
 class KiteChartsPage extends StatefulWidget {
   const KiteChartsPage({super.key});
@@ -260,6 +261,7 @@ class _KiteChartViewState extends State<_KiteChartView> {
   }
 
   String _buildChartHTML(String symbol, String token, String interval) {
+    final apiKey = KiteConfig.apiKey;
     return '''
       <!DOCTYPE html>
       <html>
@@ -346,7 +348,14 @@ class _KiteChartViewState extends State<_KiteChartView> {
               // Get access token from localStorage
               console.log('🎯 Live Charts: Checking localStorage for access_token');
               const access_token = localStorage.getItem('access_token');
-              const apiKey = 'ucc48co5brk4kb8e'; // From kite_config.dart
+              const apiKey = '$apiKey';
+
+              if (!apiKey) {
+                const msg = 'API key missing. Set KITE_API_KEY via --dart-define.';
+                document.getElementById('info').innerHTML = msg;
+                document.getElementById('chart').innerHTML = '<div style="color: red; padding: 20px;">' + msg + '</div>';
+                return;
+              }
               
               if (!access_token) {
                 const msg = 'Error: Not authenticated. Please login first.';

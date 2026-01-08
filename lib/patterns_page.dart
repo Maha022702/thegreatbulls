@@ -61,6 +61,25 @@ class PatternsPage extends StatelessWidget {
               ),
             ),
 
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              child: Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.amber.withOpacity(0.25)),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 10)),
+                  ],
+                ),
+                child: const Text(
+                  'Pattern calls are paired with quality metrics: confidence score, volume confirmation, and multi-timeframe alignment so you know when to trust the setup.',
+                  style: TextStyle(color: Colors.white70, height: 1.5),
+                ),
+              ),
+            ),
+
             // Patterns Content
             Container(
               padding: const EdgeInsets.all(40),

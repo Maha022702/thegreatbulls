@@ -2,12 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:crypto/crypto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-class KiteConfig {
-  static const String apiKey = '04iqs9xlhundtdyd';
-  static const String apiSecret = 'gcpzn0tiet9mfh833c4pat2ibcb5wgce';
-  static const String kiteApiUrl = 'https://api.kite.trade';
-}
+import 'kite_config.dart';
 
 class KiteService {
   static const String _accessTokenKey = 'access_token';
