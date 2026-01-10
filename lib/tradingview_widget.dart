@@ -10,20 +10,20 @@ class TradingViewChartPage extends StatefulWidget {
 }
 
 class _TradingViewChartPageState extends State<TradingViewChartPage> {
-  String _selectedSymbol = 'NSE:RELIANCE';
+  String _selectedSymbol = 'NASDAQ:AAPL';
   String _selectedInterval = 'D';
 
   final List<Map<String, String>> popularSymbols = [
-    {'name': 'Reliance Industries', 'symbol': 'NSE:RELIANCE'},
-    {'name': 'TCS', 'symbol': 'NSE:TCS'},
-    {'name': 'Infosys', 'symbol': 'NSE:INFY'},
-    {'name': 'HDFC Bank', 'symbol': 'NSE:HDFCBANK'},
-    {'name': 'ICICI Bank', 'symbol': 'NSE:ICICIBANK'},
-    {'name': 'State Bank of India', 'symbol': 'NSE:SBIN'},
-    {'name': 'ITC', 'symbol': 'NSE:ITC'},
-    {'name': 'Maruti Suzuki', 'symbol': 'NSE:MARUTI'},
-    {'name': 'Wipro', 'symbol': 'NSE:WIPRO'},
-    {'name': 'Asian Paints', 'symbol': 'NSE:ASIANPAINT'},
+    {'name': 'Apple', 'symbol': 'NASDAQ:AAPL'},
+    {'name': 'Microsoft', 'symbol': 'NASDAQ:MSFT'},
+    {'name': 'NVIDIA', 'symbol': 'NASDAQ:NVDA'},
+    {'name': 'Tesla', 'symbol': 'NASDAQ:TSLA'},
+    {'name': 'Amazon', 'symbol': 'NASDAQ:AMZN'},
+    {'name': 'Meta', 'symbol': 'NASDAQ:META'},
+    {'name': 'Alphabet', 'symbol': 'NASDAQ:GOOGL'},
+    {'name': 'Netflix', 'symbol': 'NASDAQ:NFLX'},
+    {'name': 'S&P 500 (SPY)', 'symbol': 'AMEX:SPY'},
+    {'name': 'NASDAQ 100 (QQQ)', 'symbol': 'NASDAQ:QQQ'},
   ];
 
   final List<Map<String, String>> intervals = [
@@ -48,15 +48,18 @@ class _TradingViewChartPageState extends State<TradingViewChartPage> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.grey[900],
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.amber.withOpacity(0.3)),
+              color: Colors.white.withOpacity(0.04),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withOpacity(0.08)),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.35), blurRadius: 20, offset: const Offset(0, 12)),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Advanced Charts',
+                  'US Equities & ETFs',
                   style: TextStyle(
                     color: Colors.amber,
                     fontSize: 24,
@@ -65,7 +68,7 @@ class _TradingViewChartPageState extends State<TradingViewChartPage> {
                 ),
                 const SizedBox(height: 5),
                 const Text(
-                  'Real-time interactive charts powered by TradingView',
+                  'Real-time TradingView charts for U.S. mega-caps and index ETFs.',
                   style: TextStyle(color: Colors.white70),
                 ),
                 const SizedBox(height: 20),
@@ -74,7 +77,7 @@ class _TradingViewChartPageState extends State<TradingViewChartPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Select Stock',
+                      'Select Ticker',
                       style: TextStyle(
                         color: Colors.amber,
                         fontWeight: FontWeight.bold,
@@ -158,12 +161,15 @@ class _TradingViewChartPageState extends State<TradingViewChartPage> {
           Container(
             height: 600,
             decoration: BoxDecoration(
-              color: Colors.grey[900],
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.amber.withOpacity(0.3)),
+              color: Colors.white.withOpacity(0.02),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withOpacity(0.08)),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 24, offset: const Offset(0, 18)),
+              ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
               child: _TradingViewChart(
                 symbol: _selectedSymbol,
                 interval: _selectedInterval,
@@ -175,9 +181,12 @@ class _TradingViewChartPageState extends State<TradingViewChartPage> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.blue.withOpacity(0.3)),
+              color: Colors.blue.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.blue.withOpacity(0.25)),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 18, offset: const Offset(0, 12)),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,10 +206,8 @@ class _TradingViewChartPageState extends State<TradingViewChartPage> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Charts are powered by TradingView and provide real-time market data. '
-                  'You can zoom, pan, and apply technical indicators. '
-                  'Data is updated in real-time for all NSE stocks.',
-                  style: TextStyle(color: Colors.white.withOpacity(0.8)),
+                  'TradingView widgets stream live U.S. market data. Use the toolbar to apply indicators, drawing tools, and compare multiple tickers.',
+                  style: TextStyle(color: Colors.white.withOpacity(0.82)),
                 ),
               ],
             ),

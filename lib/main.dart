@@ -13,6 +13,7 @@ import 'kite_config.dart';
 import 'kite_oauth_service.dart';
 import 'auth_callback_page.dart';
 import 'oauth_dashboard.dart';
+import 'trading_dashboard.dart';
 import 'features_page.dart';
 import 'demo_page.dart';
 import 'setup_guide_page.dart';
@@ -89,7 +90,7 @@ final GoRouter _router = GoRouter(
     ),
     GoRoute(
       path: '/dashboard',
-      builder: (context, state) => const OAuthDashboard(),
+      builder: (context, state) => const TradingDashboard(),
     ),
     GoRoute(
       path: '/privacy-policy',

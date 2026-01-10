@@ -48,4 +48,24 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 .vercel
+
+# AWS Lambda
+aws-lambda/node_modules/
+aws-lambda/*.zip
+aws-lambda/package-lock.json
+
+# Python
+scripts/__pycache__/
+scripts/*.pyc
+scripts/.venv/
+scripts/venv/
+
+# Docker
+scripts/.dockerignore
+
+# Secrets (just in case)
+*.pem
+*.key
+.env
+.env.local
 .env*.local

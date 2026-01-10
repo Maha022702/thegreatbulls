@@ -93,6 +93,58 @@ The Great Bulls embodies luxury and sophistication:
 - **Icons**: Font Awesome Flutter
 - **Theme**: Material 3 with custom dark theme
 
+## 🐍 Python Integration Script
+
+For advanced data collection and AI analysis, use the included Python script with AWS deployment:
+
+### Local Setup
+1. Navigate to the scripts directory:
+   ```bash
+   cd scripts
+   ```
+
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Set environment variables:
+   ```bash
+   export KITE_API_KEY="your_api_key"
+   export KITE_API_SECRET="your_api_secret"
+   export AWS_REGION="us-east-1"
+   export OPENSEARCH_ENDPOINT="your-opensearch-endpoint"
+   export BEDROCK_MODEL_ID="anthropic.claude-v2"
+   ```
+
+4. Run the script:
+   ```bash
+   python kite_integration.py
+   ```
+
+### AWS Deployment
+1. Build Docker image:
+   ```bash
+   docker build -t kite-collector .
+   ```
+
+2. Deploy to ECS:
+   - Create ECS cluster and task definition using the Dockerfile.
+   - Set environment variables in task definition.
+   - Attach IAM roles for S3, OpenSearch, Bedrock access.
+
+3. Or deploy to EC2:
+   - Launch EC2 instance with Docker.
+   - Use user data script to pull and run the container.
+
+### Features
+- Full Kite Connect authentication
+- Historical data collection (OHLCV) with S3 backup
+- Live data streaming via WebSocket
+- Vector database storage with Amazon OpenSearch
+- AI-powered analysis using Amazon Bedrock via LangChain
+- CloudWatch logging and monitoring
+
 ## 🤝 Contributing
 
 We welcome contributions! Please:

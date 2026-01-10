@@ -1,6 +1,0 @@
-{
-  "name": "thegreatbulls-lambda",
-  "version": "1.0.0",
-  "description": "Lambda functions for TheGreatBulls",
-  "main": "token-exchange.js"
-}

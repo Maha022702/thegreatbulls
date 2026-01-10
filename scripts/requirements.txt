@@ -1,0 +1,10 @@
+kiteconnect
+sentence-transformers
+opensearch-py
+requests-aws4auth
+langchain
+langchain-community
+langchain-aws
+boto3
+pandas
+pyarrow

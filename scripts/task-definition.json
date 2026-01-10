@@ -1,0 +1,52 @@
+{
+    "family": "kite-collector-task",
+    "taskRoleArn": "arn:aws:iam::955223516342:role/kite-ecs-task-role",
+    "executionRoleArn": "arn:aws:iam::955223516342:role/kite-ecs-execution-role",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "1024",
+    "memory": "2048",
+    "containerDefinitions": [
+        {
+            "name": "kite-collector",
+            "image": "955223516342.dkr.ecr.us-east-1.amazonaws.com/kite-collector:latest",
+            "essential": true,
+            "environment": [
+                {
+                    "name": "AWS_REGION",
+                    "value": "us-east-1"
+                },
+                {
+                    "name": "OPENSEARCH_ENDPOINT",
+                    "value": "search-kite-stock-data-4phbzwci5cfo6jla7vs7yrjkcu.us-east-1.es.amazonaws.com"
+                },
+                {
+                    "name": "BEDROCK_MODEL_ID",
+                    "value": "anthropic.claude-v2"
+                }
+            ],
+            "secrets": [
+                {
+                    "name": "KITE_API_KEY",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-1:955223516342:secret:kite-api-key-obrkdp"
+                },
+                {
+                    "name": "KITE_API_SECRET", 
+                    "valueFrom": "arn:aws:secretsmanager:us-east-1:955223516342:secret:kite-api-secret-Djxxfc"
+                },
+                {
+                    "name": "KITE_ACCESS_TOKEN",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-1:955223516342:secret:kite-access-token-h1PMcw"
+                }
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/kite-collector",
+                    "awslogs-region": "us-east-1",
+                    "awslogs-stream-prefix": "ecs"
+                }
+            }
+        }
+    ]
+}

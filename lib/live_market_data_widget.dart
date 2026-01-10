@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:html' as html;
 import 'dart:ui_web' as ui_web;
+import 'kite_config.dart';
 
 class LiveMarketDataWidget extends StatefulWidget {
   const LiveMarketDataWidget({Key? key}) : super(key: key);
@@ -680,7 +681,13 @@ class _LiveMarketDataWidgetState extends State<LiveMarketDataWidget> {
       
       updateStatus('Connecting...', 'connecting');
       
-      const apiKey = 'j3xfcw2nl5v4lx3v';
+      final apiKey = KiteConfig.apiKey;
+      if (apiKey.isEmpty) {
+        setState(() {
+          connectionStatus = 'Missing API key - set KITE_API_KEY via --dart-define';
+        });
+        return;
+      }
       ws = new WebSocket('wss://ws.kite.trade?api_key=' + apiKey + '&access_token=' + accessToken);
       ws.binaryType = 'arraybuffer';
       
