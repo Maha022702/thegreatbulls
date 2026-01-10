@@ -35,7 +35,8 @@ class KiteAWSCollector:
         self.bedrock_model_id = bedrock_model_id
         self.kite = KiteConnect(api_key=self.api_key)
         self.access_token = None
-        self.instruments = instruments or [{'name': 'NIFTY BANK', 'token': 256265}]
+        # Focus on NIFTY50 for world-class charts
+        self.instruments = instruments or [{'name': 'NIFTY 50', 'token': 256265}]
         self.live_data_buffer = {}  # For aggregating live ticks into candles
         self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
         self.index_name = 'kite-stock-data'
@@ -90,28 +91,53 @@ class KiteAWSCollector:
             logging.error(f"Authentication failed: {e}")
             raise
 
-    def fetch_historical_data(self, instrument_token, from_date, to_date, interval='minute'):
-        """Fetch historical OHLCV data in batches."""
+    def fetch_historical_data(self, instrument_token, from_date=None, to_date=None, interval='minute'):
+        """Fetch maximum historical OHLCV data for world-class charts."""
+        # If no dates provided, fetch maximum available (up to 2 years back)
+        if from_date is None:
+            # Kite Connect allows up to 2 years of historical data
+            from_date = datetime.now() - timedelta(days=730)  # 2 years
+        if to_date is None:
+            to_date = datetime.now()
+
+        logging.info(f"Fetching historical data for instrument {instrument_token} from {from_date} to {to_date}")
+
         data = []
         current_date = from_date
+        total_batches = 0
+        total_records = 0
+
         while current_date < to_date:
             next_date = min(current_date + timedelta(days=30), to_date)  # Batch by month
             try:
                 batch = self.kite.historical_data(instrument_token, current_date, next_date, interval)
-                data.extend(batch)
-                logging.info(f"Fetched {len(batch)} records for {current_date} to {next_date}")
-                time.sleep(1)  # Rate limit
+                if batch:
+                    data.extend(batch)
+                    total_batches += 1
+                    total_records += len(batch)
+                    logging.info(f"Fetched {len(batch)} records for {current_date.strftime('%Y-%m-%d')} to {next_date.strftime('%Y-%m-%d')} (Total: {total_records})")
+                else:
+                    logging.warning(f"No data for {current_date.strftime('%Y-%m-%d')} to {next_date.strftime('%Y-%m-%d')}")
+
+                time.sleep(0.5)  # Rate limit: 2 requests per second
             except Exception as e:
-                logging.error(f"Error fetching historical data: {e}")
+                logging.error(f"Error fetching historical data for {current_date.strftime('%Y-%m-%d')}: {e}")
+                time.sleep(2)  # Wait longer on error
+
             current_date = next_date
-        df = pd.DataFrame(data)
-        # Upload to S3 (optional - skip if pyarrow not available)
-        try:
-            self.upload_to_s3(df, f'historical_{instrument_token}.parquet')
-            logging.info("Historical data saved to S3.")
-        except Exception as e:
-            logging.warning(f"Could not save to S3: {e}")
-        return df
+
+        logging.info(f"Completed fetching {total_records} historical records in {total_batches} batches for instrument {instrument_token}")
+
+        if data:
+            df = pd.DataFrame(data)
+            # Upload to S3 (optional - skip if pyarrow not available)
+            try:
+                self.upload_to_s3(df, f'historical_{instrument_token}_{interval}_{from_date.strftime("%Y%m%d")}_{to_date.strftime("%Y%m%d")}.parquet')
+                logging.info("Historical data saved to S3.")
+            except Exception as e:
+                logging.warning(f"Could not save to S3: {e}")
+
+        return data
 
     def upload_to_s3(self, df, key):
         """Upload DataFrame to S3 as Parquet."""
@@ -175,24 +201,45 @@ class KiteAWSCollector:
     def store_in_vector_db(self, data, instrument_token, is_live=False):
         """Convert data to embeddings and store in OpenSearch."""
         actions = []
-        
+
         # For live data, store individual candles; for historical, use windows
         window_size = 1 if is_live else 60
         step_size = 1 if is_live else 60
-        
+
         for i in range(0, len(data), step_size):
             window = data[i:i+window_size] if not is_live else [data[i]]
             if not window:
                 continue
-            
+
             last_candle = window[-1]
-            text = f"Instrument {instrument_token}: " + " ".join([f"{c['timestamp']} O:{c['open']} H:{c['high']} L:{c['low']} C:{c['close']} V:{c['volume']}" for c in window])
+
+            # Handle different data structures for live vs historical data
+            if is_live:
+                # Live data structure
+                timestamp = last_candle.get('timestamp', datetime.now())
+                open_price = last_candle.get('open', 0)
+                high_price = last_candle.get('high', 0)
+                low_price = last_candle.get('low', 0)
+                close_price = last_candle.get('close', 0)
+                volume = last_candle.get('volume', 0)
+            else:
+                # Historical data structure from Kite Connect
+                timestamp = last_candle.get('date', datetime.now())
+                open_price = last_candle.get('open', 0)
+                high_price = last_candle.get('high', 0)
+                low_price = last_candle.get('low', 0)
+                close_price = last_candle.get('close', 0)
+                volume = last_candle.get('volume', 0)
+
+            # Generate text for embedding (use consistent timestamp format)
+            ts_str = str(timestamp)
+            text = f"Instrument {instrument_token}: {ts_str} O:{open_price} H:{high_price} L:{low_price} C:{close_price} V:{volume}"
             embedding = self.embedding_model.encode(text).tolist()
-            
+
             # Use timestamp in ID for uniqueness
-            ts = str(last_candle['timestamp']).replace(' ', '_').replace(':', '-')
+            ts = str(timestamp).replace(' ', '_').replace(':', '-').replace('-', '_')
             doc_id = f"{instrument_token}_{ts}_{i}"
-            
+
             # Store structured candle data for easy querying
             doc = {
                 '_index': self.index_name,
@@ -200,22 +247,22 @@ class KiteAWSCollector:
                 'vector': embedding,
                 'text': text,
                 'instrument': str(instrument_token),
-                'timestamp': str(last_candle['timestamp']),
-                'open': float(last_candle['open']),
-                'high': float(last_candle['high']),
-                'low': float(last_candle['low']),
-                'close': float(last_candle['close']),
-                'volume': int(last_candle.get('volume', 0)),
+                'timestamp': str(timestamp),
+                'open': float(open_price),
+                'high': float(high_price),
+                'low': float(low_price),
+                'close': float(close_price),
+                'volume': int(volume),
                 'interval': '1m',  # Current interval
                 'is_live': is_live,
                 'metadata': {
                     'instrument': str(instrument_token),
-                    'timestamp': str(last_candle['timestamp']),
+                    'timestamp': str(timestamp),
                     'is_live': is_live
                 }
             }
             actions.append(doc)
-            
+
         if actions:
             try:
                 success, failed = bulk(self.opensearch_client, actions, raise_on_error=False)
@@ -290,39 +337,50 @@ if __name__ == "__main__":
     collector.setup_ai_integration()
     logging.info("AI integration setup complete.")
 
-    # Fetch historical data for a few instruments
-    from_date = datetime.now() - timedelta(days=30)  # Reduced to 30 days for faster startup
-    to_date = datetime.now()
-    
-    # Get some popular instruments (you might want to configure this)
-    instruments = collector.kite.instruments(exchange='NSE')[:5]  # First 5 NSE instruments
-    for instr in instruments:
-        try:
-            logging.info(f"Fetching historical data for {instr['tradingsymbol']}")
-            df = collector.fetch_historical_data(instr['instrument_token'], from_date, to_date)
-            if not df.empty:
-                collector.store_in_vector_db(df.to_dict('records'), instr['instrument_token'])
-        except Exception as e:
-            logging.error(f"Failed to process {instr['tradingsymbol']}: {e}")
+    # Fetch maximum historical data for NIFTY50 for world-class charts
+    logging.info("🚀 Starting maximum historical data collection for NIFTY50...")
 
-    # Start live data collection
-    tokens = [instr['instrument_token'] for instr in instruments]
-    collector.start_live_data_collection(tokens)
+    nifty50_token = 256265  # NIFTY50 instrument token
+    nifty50_name = "NIFTY 50"
 
-    # Example AI query
     try:
-        prediction = collector.query_ai("Analyze the current market trend based on recent data.")
-        logging.info(f"AI Analysis: {prediction}")
-    except Exception as e:
-        logging.error(f"AI query failed: {e}")
+        logging.info(f"📊 Fetching maximum historical data for {nifty50_name} (token: {nifty50_token})")
 
-    logging.info("Kite AWS Collector started successfully. Running continuously...")
+        # Fetch maximum available historical data (2 years)
+        historical_data = collector.fetch_historical_data(nifty50_token, interval='minute')
+
+        if historical_data:
+            logging.info(f"✅ Fetched {len(historical_data)} historical records for {nifty50_name}")
+
+            # Store in OpenSearch for vector search and retrieval
+            collector.store_in_vector_db(historical_data, nifty50_token, is_live=False)
+            logging.info(f"✅ Stored historical data in OpenSearch for {nifty50_name}")
+        else:
+            logging.warning(f"⚠️ No historical data fetched for {nifty50_name}")
+
+    except Exception as e:
+        logging.error(f"❌ Failed to fetch historical data for {nifty50_name}: {e}")
+
+    # Start live data collection for NIFTY50 only
+    logging.info("📡 Starting live data collection for NIFTY50...")
+    collector.start_live_data_collection([nifty50_token])
+
+    logging.info("🎯 NIFTY50 data collection setup complete!")
+    logging.info("📈 Historical data available for world-class charts")
+    logging.info("🔄 Live data collection running continuously")
+
+    # Start live data collection for NIFTY50 only
+    logging.info("📡 Starting live data collection for NIFTY50...")
+    collector.start_live_data_collection([nifty50_token])
+
+    logging.info("🎯 NIFTY50 data collection setup complete!")
+    logging.info("📈 Historical data available for world-class charts")
+    logging.info("🔄 Live data collection running continuously")
 
     # Keep running
     while True:
         time.sleep(300)  # Check every 5 minutes
-        # Could add periodic AI analysis here
-        time.sleep(10)
+        logging.info("🔄 Collector still running - NIFTY50 data collection active")
 
 # AWS Deployment Notes:
 # 1. Dockerfile: FROM python:3.10-slim, COPY requirements.txt, RUN pip install, COPY kite_integration.py, CMD ["python", "kite_integration.py"]
