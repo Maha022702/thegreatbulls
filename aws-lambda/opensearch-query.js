@@ -170,10 +170,16 @@ async function getHistoricalData(params) {
       count: result.body.hits.hits.length,
       data: result.body.hits.hits.map(hit => ({
         id: hit._id,
-        timestamp: hit._source.metadata?.timestamp || '',
-        is_live: hit._source.metadata?.is_live || false,
+        timestamp: hit._source.timestamp || hit._source.metadata?.timestamp || '',
+        open: hit._source.open || 0,
+        high: hit._source.high || 0,
+        low: hit._source.low || 0,
+        close: hit._source.close || 0,
+        volume: hit._source.volume || 0,
+        interval: hit._source.interval || '1m',
+        is_live: hit._source.is_live || hit._source.metadata?.is_live || false,
         text: hit._source.text,
-        instrument: hit._source.metadata?.instrument || instrumentId
+        instrument: hit._source.instrument || hit._source.metadata?.instrument || instrumentId
       })),
       message: result.body.hits.hits.length === 0 ? 'No data found for this instrument' : null
     });

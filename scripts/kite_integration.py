@@ -105,9 +105,12 @@ class KiteAWSCollector:
                 logging.error(f"Error fetching historical data: {e}")
             current_date = next_date
         df = pd.DataFrame(data)
-        # Upload to S3
-        self.upload_to_s3(df, f'historical_{instrument_token}.parquet')
-        logging.info("Historical data saved to S3.")
+        # Upload to S3 (optional - skip if pyarrow not available)
+        try:
+            self.upload_to_s3(df, f'historical_{instrument_token}.parquet')
+            logging.info("Historical data saved to S3.")
+        except Exception as e:
+            logging.warning(f"Could not save to S3: {e}")
         return df
 
     def upload_to_s3(self, df, key):
@@ -131,7 +134,7 @@ class KiteAWSCollector:
         def on_connect(ws, response):
             logging.info("WebSocket connected.")
             ws.subscribe(instrument_tokens)
-            ws.set_mode(ws.MODE_LTP, instrument_tokens)
+            ws.set_mode(ws.MODE_FULL, instrument_tokens)  # Use FULL mode to get all fields
 
         def on_close(ws, code, reason):
             logging.info("WebSocket closed.")
@@ -147,39 +150,82 @@ class KiteAWSCollector:
         def aggregate_candles():
             while True:
                 time.sleep(60)  # Every minute
-                for token, ticks in self.live_data_buffer.items():
-                    if ticks:
-                        candle = {
-                            'timestamp': ticks[-1]['timestamp'],
-                            'open': ticks[0]['last_price'],
-                            'high': max(t['last_price'] for t in ticks),
-                            'low': min(t['last_price'] for t in ticks),
-                            'close': ticks[-1]['last_price'],
-                            'volume': sum(t.get('volume', 0) for t in ticks)
-                        }
-                        self.store_in_vector_db([candle], token, is_live=True)
-                        self.live_data_buffer[token] = []
+                for token, ticks in list(self.live_data_buffer.items()):
+                    if ticks and len(ticks) > 0:
+                        try:
+                            # Use current timestamp if tick doesn't have one
+                            current_time = datetime.now()
+                            candle = {
+                                'timestamp': ticks[-1].get('timestamp', current_time),
+                                'open': ticks[0].get('last_price', 0),
+                                'high': max((t.get('last_price', 0) for t in ticks), default=0),
+                                'low': min((t.get('last_price', 0) for t in ticks if t.get('last_price', 0) > 0), default=0),
+                                'close': ticks[-1].get('last_price', 0),
+                                'volume': sum(t.get('volume', 0) for t in ticks)
+                            }
+                            if candle['close'] > 0:  # Only store valid candles
+                                self.store_in_vector_db([candle], token, is_live=True)
+                        except Exception as e:
+                            logging.error(f"Error aggregating candles for token {token}: {e}")
+                        finally:
+                            self.live_data_buffer[token] = []
 
         threading.Thread(target=aggregate_candles, daemon=True).start()
 
     def store_in_vector_db(self, data, instrument_token, is_live=False):
         """Convert data to embeddings and store in OpenSearch."""
         actions = []
-        for i in range(0, len(data) - 59, 60):  # Windows of 60 candles
-            window = data[i:i+60]
+        
+        # For live data, store individual candles; for historical, use windows
+        window_size = 1 if is_live else 60
+        step_size = 1 if is_live else 60
+        
+        for i in range(0, len(data), step_size):
+            window = data[i:i+window_size] if not is_live else [data[i]]
+            if not window:
+                continue
+            
+            last_candle = window[-1]
             text = f"Instrument {instrument_token}: " + " ".join([f"{c['timestamp']} O:{c['open']} H:{c['high']} L:{c['low']} C:{c['close']} V:{c['volume']}" for c in window])
             embedding = self.embedding_model.encode(text).tolist()
+            
+            # Use timestamp in ID for uniqueness
+            ts = str(last_candle['timestamp']).replace(' ', '_').replace(':', '-')
+            doc_id = f"{instrument_token}_{ts}_{i}"
+            
+            # Store structured candle data for easy querying
             doc = {
                 '_index': self.index_name,
-                '_id': f"{instrument_token}_{i}",
+                '_id': doc_id,
                 'vector': embedding,
                 'text': text,
-                'metadata': {'instrument': instrument_token, 'timestamp': str(window[-1]['timestamp']), 'is_live': is_live}
+                'instrument': str(instrument_token),
+                'timestamp': str(last_candle['timestamp']),
+                'open': float(last_candle['open']),
+                'high': float(last_candle['high']),
+                'low': float(last_candle['low']),
+                'close': float(last_candle['close']),
+                'volume': int(last_candle.get('volume', 0)),
+                'interval': '1m',  # Current interval
+                'is_live': is_live,
+                'metadata': {
+                    'instrument': str(instrument_token),
+                    'timestamp': str(last_candle['timestamp']),
+                    'is_live': is_live
+                }
             }
             actions.append(doc)
+            
         if actions:
-            bulk(self.opensearch_client, actions)
-        logging.info(f"Data stored in OpenSearch for instrument {instrument_token}.")
+            try:
+                success, failed = bulk(self.opensearch_client, actions, raise_on_error=False)
+                logging.info(f"Data stored in OpenSearch for instrument {instrument_token}: {success} successful, {len(failed)} failed")
+                if failed:
+                    logging.error(f"Failed items: {failed[:3]}")  # Log first 3 failures
+            except Exception as e:
+                logging.error(f"Error storing data in OpenSearch: {e}")
+        else:
+            logging.warning(f"No data to store for instrument {instrument_token}")
 
     def setup_ai_integration(self):
         """Setup LangChain for RAG with Bedrock."""
