@@ -442,9 +442,9 @@ class _LiveMarketDataWithHistoryState extends State<LiveMarketDataWithHistory> {
             <span id="historyBtnText">Load Historical Data</span>
           </button>
           <div class="interval-selector">
-            <button class="interval-btn active" data-interval="1m" onclick="setInterval('1m')">1m</button>
-            <button class="interval-btn" data-interval="5m" onclick="setInterval('5m')">5m</button>
-            <button class="interval-btn" data-interval="15m" onclick="setInterval('15m')">15m</button>
+            <button class="interval-btn active" data-interval="1m" onclick="changeInterval('1m')">1m</button>
+            <button class="interval-btn" data-interval="5m" onclick="changeInterval('5m')">5m</button>
+            <button class="interval-btn" data-interval="15m" onclick="changeInterval('15m')">15m</button>
           </div>
           <div class="live-indicator">
             <div class="live-dot"></div>
@@ -753,7 +753,7 @@ class _LiveMarketDataWithHistoryState extends State<LiveMarketDataWithHistory> {
       updateChart();
     }
     
-    function setInterval(interval) {
+    function changeInterval(interval) {
       currentInterval = interval;
       document.querySelectorAll('.interval-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelector(\`[data-interval="\${interval}"]\`).classList.add('active');
