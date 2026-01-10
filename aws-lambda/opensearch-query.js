@@ -77,32 +77,43 @@ async function getRecentData(params) {
   const instrument = params.instrument;
   const limit = parseInt(params.limit || 100);
 
-  const query = {
-    index: OPENSEARCH_INDEX,
-    body: {
-      query: instrument ? {
-        match: { 'metadata.instrument': instrument }
-      } : {
-        match_all: {}
-      },
-      sort: [{ 'metadata.timestamp': 'desc' }],
-      size: limit
-    }
-  };
+  try {
+    const query = {
+      index: OPENSEARCH_INDEX,
+      body: {
+        query: instrument ? {
+          bool: {
+            should: [
+              { match: { 'metadata.instrument': instrument } },
+              { wildcard: { 'text': `*Instrument ${instrument}*` } }
+            ],
+            minimum_should_match: 1
+          }
+        } : {
+          match_all: {}
+        },
+        size: limit
+      }
+    };
 
-  const result = await client.search(query);
-  
-  return successResponse({
-    count: result.body.hits.hits.length,
-    data: result.body.hits.hits.map(hit => ({
-      id: hit._id,
-      instrument: hit._source.metadata.instrument,
-      timestamp: hit._source.metadata.timestamp,
-      is_live: hit._source.metadata.is_live,
-      text: hit._source.text,
-      score: hit._score
-    }))
-  });
+    const result = await client.search(query);
+    
+    return successResponse({
+      count: result.body.hits.hits.length,
+      data: result.body.hits.hits.map(hit => ({
+        id: hit._id,
+        instrument: hit._source.metadata?.instrument || '',
+        timestamp: hit._source.metadata?.timestamp || '',
+        is_live: hit._source.metadata?.is_live || false,
+        text: hit._source.text,
+        score: hit._score
+      }))
+    });
+    
+  } catch (error) {
+    console.error('Recent data query error:', error);
+    return errorResponse(500, `Query failed: ${error.message}`);
+  }
 }
 
 /**
@@ -110,54 +121,67 @@ async function getRecentData(params) {
  */
 async function getHistoricalData(params) {
   const instrument = params.instrument;
+  const token = params.token;
   const from = params.from;
   const to = params.to;
   const limit = parseInt(params.limit || 1000);
 
-  if (!instrument) {
-    return errorResponse(400, 'instrument parameter is required');
-  }
-
-  const query = {
-    index: OPENSEARCH_INDEX,
-    body: {
-      query: {
-        bool: {
-          must: [
-            { match: { 'metadata.instrument': instrument } }
-          ],
-          filter: []
-        }
-      },
-      sort: [{ 'metadata.timestamp': 'asc' }],
-      size: limit
-    }
-  };
-
-  // Add time range if provided
-  if (from || to) {
-    query.body.query.bool.filter.push({
-      range: {
-        'metadata.timestamp': {
-          ...(from && { gte: from }),
-          ...(to && { lte: to })
-        }
-      }
-    });
-  }
-
-  const result = await client.search(query);
+  // Support both instrument and token parameters
+  const instrumentId = instrument || token;
   
-  return successResponse({
-    instrument,
-    count: result.body.hits.hits.length,
-    data: result.body.hits.hits.map(hit => ({
-      id: hit._id,
-      timestamp: hit._source.metadata.timestamp,
-      is_live: hit._source.metadata.is_live,
-      text: hit._source.text
-    }))
-  });
+  if (!instrumentId) {
+    return errorResponse(400, 'instrument or token parameter is required');
+  }
+
+  try {
+    // First, check if index exists and get mapping
+    const indexExists = await client.indices.exists({ index: OPENSEARCH_INDEX });
+    
+    if (!indexExists.body) {
+      return successResponse({
+        instrument: instrumentId,
+        count: 0,
+        data: [],
+        message: 'Index does not exist yet. Waiting for data collection to start.'
+      });
+    }
+
+    // Query without sorting first to check if data exists
+    const query = {
+      index: OPENSEARCH_INDEX,
+      body: {
+        query: {
+          bool: {
+            should: [
+              { match: { 'metadata.instrument': instrumentId } },
+              { wildcard: { 'text': `*Instrument ${instrumentId}*` } }
+            ],
+            minimum_should_match: 1
+          }
+        },
+        size: limit
+      }
+    };
+
+    const result = await client.search(query);
+  
+    return successResponse({
+      instrument: instrumentId,
+      count: result.body.hits.hits.length,
+      data: result.body.hits.hits.map(hit => ({
+        id: hit._id,
+        timestamp: hit._source.metadata?.timestamp || '',
+        is_live: hit._source.metadata?.is_live || false,
+        text: hit._source.text,
+        instrument: hit._source.metadata?.instrument || instrumentId
+      })),
+      message: result.body.hits.hits.length === 0 ? 'No data found for this instrument' : null
+    });
+    
+  } catch (error) {
+    console.error('OpenSearch query error:', error);
+    return errorResponse(500, `Query failed: ${error.message}`);
+  }
 }
 
 /**

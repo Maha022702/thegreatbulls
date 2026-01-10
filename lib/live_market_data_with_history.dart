@@ -563,14 +563,22 @@ class _LiveMarketDataWithHistoryState extends State<LiveMarketDataWithHistory> {
         
         const data = await response.json();
         
-        if (data.status === 'success' && data.data && data.data.length > 0) {
-          // Process and merge historical data
-          processHistoricalData(data.data);
-          hasHistoricalData = true;
-          document.getElementById('historyBadge').style.display = 'inline-flex';
-          document.getElementById('historyStatus').style.display = 'block';
-          document.getElementById('historyStatus').textContent = \`Historical: \${data.data.length} records loaded\`;
-          updateChart();
+        if (data.status === 'success' && data.data) {
+          if (data.data.count > 0 && data.data.data && data.data.data.length > 0) {
+            // Process and merge historical data
+            processHistoricalData(data.data.data);
+            hasHistoricalData = true;
+            document.getElementById('historyBadge').style.display = 'inline-flex';
+            document.getElementById('historyStatus').style.display = 'block';
+            document.getElementById('historyStatus').textContent = \`Historical: \${data.data.count} records loaded\`;
+            updateChart();
+          } else {
+            console.log('No historical data available:', data.data.message || 'No data in OpenSearch');
+            const message = data.data.message || 'No historical data available';
+            document.getElementById('historyStatus').style.display = 'block';
+            document.getElementById('historyStatus').textContent = \`Historical: \${message}\`;
+            alert('No historical data found. The data collector may not be running yet.');
+          }
         } else {
           console.log('No historical data available');
           document.getElementById('historyStatus').textContent = 'Historical: No data available';
