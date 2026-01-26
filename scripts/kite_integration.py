@@ -55,24 +55,41 @@ class KiteAWSCollector:
             verify_certs=True,
             connection_class=RequestsHttpConnection
         )
-        # Create index if not exists
-        if not self.opensearch_client.indices.exists(index=self.index_name):
-            index_body = {
-                "mappings": {
-                    "properties": {
-                        "vector": {"type": "knn_vector", "dimension": 384},
-                        "text": {"type": "text"},
-                        "metadata": {"type": "object"}
-                    }
-                },
-                "settings": {
-                    "index": {
-                        "knn": True
-                    }
+        
+        # Delete existing index to start fresh with correct mapping
+        if self.opensearch_client.indices.exists(index=self.index_name):
+            logging.info(f"Deleting existing index {self.index_name} to recreate with proper mapping...")
+            self.opensearch_client.indices.delete(index=self.index_name)
+            time.sleep(2)  # Wait for deletion to complete
+        
+        # Create index with proper mapping for all fields
+        index_body = {
+            "mappings": {
+                "properties": {
+                    "vector": {"type": "knn_vector", "dimension": 384},
+                    "text": {"type": "text"},
+                    "instrument": {"type": "keyword"},
+                    "timestamp": {"type": "date", "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd HH:mm:ss.SSSSSS||strict_date_optional_time"},
+                    "open": {"type": "float"},
+                    "high": {"type": "float"},
+                    "low": {"type": "float"},
+                    "close": {"type": "float"},
+                    "volume": {"type": "long"},
+                    "interval": {"type": "keyword"},
+                    "is_live": {"type": "boolean"},
+                    "metadata": {"type": "object"}
+                }
+            },
+            "settings": {
+                "index": {
+                    "knn": True,
+                    "number_of_shards": 2,
+                    "number_of_replicas": 1
                 }
             }
-            self.opensearch_client.indices.create(index=self.index_name, body=index_body)
-        logging.info("OpenSearch setup complete.")
+        }
+        self.opensearch_client.indices.create(index=self.index_name, body=index_body)
+        logging.info(f"✅ OpenSearch index '{self.index_name}' created with proper mapping")
 
     def authenticate(self):
         """Handle full authentication flow."""
@@ -199,80 +216,103 @@ class KiteAWSCollector:
         threading.Thread(target=aggregate_candles, daemon=True).start()
 
     def store_in_vector_db(self, data, instrument_token, is_live=False):
-        """Convert data to embeddings and store in OpenSearch."""
-        actions = []
-
-        # For live data, store individual candles; for historical, use windows
-        window_size = 1 if is_live else 60
-        step_size = 1 if is_live else 60
-
-        for i in range(0, len(data), step_size):
-            window = data[i:i+window_size] if not is_live else [data[i]]
-            if not window:
-                continue
-
-            last_candle = window[-1]
-
-            # Handle different data structures for live vs historical data
-            if is_live:
-                # Live data structure
-                timestamp = last_candle.get('timestamp', datetime.now())
-                open_price = last_candle.get('open', 0)
-                high_price = last_candle.get('high', 0)
-                low_price = last_candle.get('low', 0)
-                close_price = last_candle.get('close', 0)
-                volume = last_candle.get('volume', 0)
-            else:
-                # Historical data structure from Kite Connect
-                timestamp = last_candle.get('date', datetime.now())
-                open_price = last_candle.get('open', 0)
-                high_price = last_candle.get('high', 0)
-                low_price = last_candle.get('low', 0)
-                close_price = last_candle.get('close', 0)
-                volume = last_candle.get('volume', 0)
-
-            # Generate text for embedding (use consistent timestamp format)
-            ts_str = str(timestamp)
-            text = f"Instrument {instrument_token}: {ts_str} O:{open_price} H:{high_price} L:{low_price} C:{close_price} V:{volume}"
-            embedding = self.embedding_model.encode(text).tolist()
-
-            # Use timestamp in ID for uniqueness
-            ts = str(timestamp).replace(' ', '_').replace(':', '-').replace('-', '_')
-            doc_id = f"{instrument_token}_{ts}_{i}"
-
-            # Store structured candle data for easy querying
-            doc = {
-                '_index': self.index_name,
-                '_id': doc_id,
-                'vector': embedding,
-                'text': text,
-                'instrument': str(instrument_token),
-                'timestamp': str(timestamp),
-                'open': float(open_price),
-                'high': float(high_price),
-                'low': float(low_price),
-                'close': float(close_price),
-                'volume': int(volume),
-                'interval': '1m',  # Current interval
-                'is_live': is_live,
-                'metadata': {
-                    'instrument': str(instrument_token),
-                    'timestamp': str(timestamp),
-                    'is_live': is_live
-                }
-            }
-            actions.append(doc)
-
-        if actions:
-            try:
-                success, failed = bulk(self.opensearch_client, actions, raise_on_error=False)
-                logging.info(f"Data stored in OpenSearch for instrument {instrument_token}: {success} successful, {len(failed)} failed")
-                if failed:
-                    logging.error(f"Failed items: {failed[:3]}")  # Log first 3 failures
-            except Exception as e:
-                logging.error(f"Error storing data in OpenSearch: {e}")
-        else:
+        """Convert data to embeddings and store in OpenSearch in batches."""
+        if not data:
             logging.warning(f"No data to store for instrument {instrument_token}")
+            return
+
+        total_records = len(data)
+        batch_size = 500  # Process in smaller batches to avoid timeouts
+        total_success = 0
+        total_failed = 0
+
+        logging.info(f"📦 Processing {total_records} records for instrument {instrument_token} (is_live={is_live})")
+
+        for batch_num, batch_start in enumerate(range(0, total_records, batch_size)):
+            batch_end = min(batch_start + batch_size, total_records)
+            batch_data = data[batch_start:batch_end]
+            actions = []
+
+            for i, candle in enumerate(batch_data):
+                try:
+                    # Handle different data structures for live vs historical data
+                    if is_live:
+                        # Live data structure
+                        timestamp = candle.get('timestamp', datetime.now())
+                        open_price = candle.get('open', 0)
+                        high_price = candle.get('high', 0)
+                        low_price = candle.get('low', 0)
+                        close_price = candle.get('close', 0)
+                        volume = candle.get('volume', 0)
+                    else:
+                        # Historical data structure from Kite Connect
+                        timestamp = candle.get('date')
+                        if not timestamp:
+                            logging.error(f"Missing 'date' field in historical candle: {candle}")
+                            continue
+                        open_price = candle.get('open', 0)
+                        high_price = candle.get('high', 0)
+                        low_price = candle.get('low', 0)
+                        close_price = candle.get('close', 0)
+                        volume = candle.get('volume', 0)
+
+                    # Skip invalid data
+                    if close_price == 0:
+                        continue
+
+                    # Generate text for embedding
+                    ts_str = timestamp.strftime('%Y-%m-%d %H:%M:%S') if hasattr(timestamp, 'strftime') else str(timestamp)
+                    text = f"Instrument {instrument_token}: {ts_str} O:{open_price} H:{high_price} L:{low_price} C:{close_price} V:{volume}"
+                    embedding = self.embedding_model.encode(text).tolist()
+
+                    # Use timestamp in ID for uniqueness
+                    ts_id = ts_str.replace(' ', '_').replace(':', '-').replace('-', '_')
+                    doc_id = f"{instrument_token}_{ts_id}_{batch_start + i}"
+
+                    # Store structured candle data
+                    doc = {
+                        '_index': self.index_name,
+                        '_id': doc_id,
+                        'vector': embedding,
+                        'text': text,
+                        'instrument': str(instrument_token),
+                        'timestamp': ts_str,
+                        'open': float(open_price),
+                        'high': float(high_price),
+                        'low': float(low_price),
+                        'close': float(close_price),
+                        'volume': int(volume),
+                        'interval': '1m',
+                        'is_live': is_live,
+                        'metadata': {
+                            'instrument': str(instrument_token),
+                            'timestamp': ts_str,
+                            'is_live': is_live
+                        }
+                    }
+                    actions.append(doc)
+                except Exception as e:
+                    logging.error(f"Error preparing document {i}: {e}")
+                    continue
+
+            # Store batch
+            if actions:
+                try:
+                    success, failed = bulk(self.opensearch_client, actions, raise_on_error=False, max_retries=3, initial_backoff=2)
+                    total_success += success
+                    total_failed += len(failed) if failed else 0
+                    
+                    logging.info(f"  Batch {batch_num + 1}: {success}/{len(actions)} stored successfully")
+                    
+                    if failed:
+                        logging.error(f"  Batch {batch_num + 1} had {len(failed)} failures")
+                        for fail in failed[:3]:  # Log first 3 failures
+                            logging.error(f"    Failed: {fail}")
+                except Exception as e:
+                    total_failed += len(actions)
+                    logging.error(f"  Batch {batch_num + 1} error: {e}")
+
+        logging.info(f"✅ Finished storing instrument {instrument_token}: {total_success} successful, {total_failed} failed out of {total_records} total")
 
     def setup_ai_integration(self):
         """Setup LangChain for RAG with Bedrock."""

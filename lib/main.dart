@@ -223,10 +223,15 @@ class HomePage extends StatelessWidget {
                 title: GestureDetector(
                   onTap: () => context.go('/'),
                   child: Row(
-                    children: const [
-                      FaIcon(FontAwesomeIcons.bullseye, color: Colors.amber, size: 28),
-                      SizedBox(width: 12),
-                      Text(
+                    children: [
+                      Image.asset(
+                        'assets/logov1.png',
+                        width: 36,
+                        height: 36,
+                        fit: BoxFit.contain,
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
                         'The Great Bulls',
                         style: TextStyle(
                           color: Colors.amber,
@@ -238,67 +243,46 @@ class HomePage extends StatelessWidget {
                   ),
                 ),
                 actions: [
-                  Consumer<AppState>(
-                    builder: (context, appState, child) {
-                      if (appState.isLoggedIn) {
-                        return Row(
-                          children: [
-                            TextButton.icon(
-                              onPressed: () => context.go('/dashboard'),
-                              icon: const FaIcon(FontAwesomeIcons.chartLine, color: Colors.white, size: 16),
-                              label: const Text('Dashboard', style: TextStyle(color: Colors.white)),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.amber.withOpacity(0.18),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.amber.withOpacity(0.4)),
-                              ),
-                              child: Row(
-                                children: [
-                                  const FaIcon(FontAwesomeIcons.user, color: Colors.amber, size: 14),
-                                  const SizedBox(width: 8),
-                                  Text(appState.userName, style: const TextStyle(color: Colors.amber)),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            TextButton.icon(
-                              onPressed: () async {
-                                await appState.logout();
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Logged out successfully')),
-                                  );
-                                }
-                              },
-                              icon: const FaIcon(FontAwesomeIcons.rightFromBracket, color: Colors.redAccent, size: 16),
-                              label: const Text('Logout', style: TextStyle(color: Colors.redAccent)),
-                            ),
-                            const SizedBox(width: 16),
-                          ],
-                        );
-                      } else {
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 16),
-                          child: ElevatedButton.icon(
-                            onPressed: () => _startLogin(context),
-                            icon: const FaIcon(FontAwesomeIcons.rightToBracket, size: 16),
-                            label: const Text('Login with Zerodha'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.amber,
-                              foregroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                              shadowColor: Colors.amberAccent,
-                              elevation: 8,
-                            ),
-                          ),
-                        );
-                      }
-                    },
+                  TextButton(
+                    onPressed: () => context.go('/'),
+                    child: const Text('Home', style: TextStyle(color: Colors.white, fontSize: 16)),
                   ),
+                  const SizedBox(width: 20),
+                  TextButton(
+                    onPressed: () => context.go('/insights'),
+                    child: const Text('Insights', style: TextStyle(color: Colors.white, fontSize: 16)),
+                  ),
+                  const SizedBox(width: 20),
+                  TextButton(
+                    onPressed: () => context.go('/ai-predictions'),
+                    child: const Text('AI Predictions', style: TextStyle(color: Colors.white, fontSize: 16)),
+                  ),
+                  const SizedBox(width: 20),
+                  TextButton(
+                    onPressed: () => context.go('/setup-guide'),
+                    child: const Text('Education', style: TextStyle(color: Colors.white, fontSize: 16)),
+                  ),
+                  const SizedBox(width: 20),
+                  TextButton(
+                    onPressed: () => context.go('/faq'),
+                    child: const Text('Contact us', style: TextStyle(color: Colors.white, fontSize: 16)),
+                  ),
+                  const SizedBox(width: 30),
+                  TextButton(
+                    onPressed: () => _startLogin(context),
+                    child: const Text('Login', style: TextStyle(color: Colors.amber, fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: () => _startLogin(context), // For now, using same login function
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.amber,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    ),
+                    child: const Text('Sign up'),
+                  ),
+                  const SizedBox(width: 16),
                 ],
               ),
               // Page Content
@@ -315,7 +299,6 @@ class HomePage extends StatelessWidget {
               ),
             ],
           ),
-          _buildQuickNav(context, showSidePanel),
         ],
       ),
     );
@@ -427,39 +410,16 @@ class HomePage extends StatelessWidget {
       child: Stack(
         children: [
           // Background Pattern
-          Positioned.fill(
-            child: Opacity(
-              opacity: 0.05,
-              child: Container(
-                decoration: BoxDecoration(
-                  image: DecorationImage(
-                    image: NetworkImage('https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1920&h=1080&fit=crop'),
-                    fit: BoxFit.cover,
-                  ),
-                ),
+          Container(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/home_screen.png'),
+                fit: BoxFit.cover,
+                alignment: Alignment.center,
               ),
             ),
-          ),
-          // Floating Elements
-          Positioned(
-            top: 100,
-            left: 50,
-            child: _buildFloatingCard('📈', 'Live Charts', 'Real-time candlestick charts'),
-          ),
-          Positioned(
-            top: 200,
-            right: 80,
-            child: _buildFloatingCard('🤖', 'AI Insights', 'Machine learning predictions'),
-          ),
-          Positioned(
-            bottom: 150,
-            left: 100,
-            child: _buildFloatingCard('📊', 'Technical Analysis', 'Advanced pattern recognition'),
-          ),
-          Positioned(
-            bottom: 200,
-            right: 50,
-            child: _buildFloatingCard('⚡', 'Lightning Fast', 'Sub-millisecond execution'),
           ),
 
           Center(
@@ -468,42 +428,6 @@ class HomePage extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Animated Logo/Icon
-                  TweenAnimationBuilder(
-                    tween: Tween<double>(begin: 0, end: 1),
-                    duration: const Duration(seconds: 2),
-                    builder: (context, double value, child) {
-                      return Transform.scale(
-                        scale: value,
-                        child: Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              colors: [Colors.amber, Colors.orange, Colors.amber],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.amber.withOpacity(0.3),
-                                blurRadius: 30,
-                                spreadRadius: 5,
-                              ),
-                            ],
-                          ),
-                          child: const FaIcon(
-                            FontAwesomeIcons.bullseye,
-                            size: 80,
-                            color: Colors.black,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 40),
-
                   // Main Title with Gradient
                   ShaderMask(
                     shaderCallback: (bounds) => LinearGradient(
@@ -513,9 +437,10 @@ class HomePage extends StatelessWidget {
                     child: const Text(
                       'The Great Bulls',
                       style: TextStyle(
-                        fontSize: 72,
+                        fontSize: 60,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
+                        letterSpacing: 0.5,
                         shadows: [
                           Shadow(
                             blurRadius: 20.0,
@@ -528,120 +453,106 @@ class HomePage extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 15),
 
                   // Subtitle
                   const Text(
                     'Next-Generation Trading Intelligence Platform',
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: 20,
                       color: Colors.white,
                       fontWeight: FontWeight.w300,
-                      letterSpacing: 1.2,
+                      letterSpacing: 0.8,
                     ),
                     textAlign: TextAlign.center,
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
 
                   // Description
                   Container(
-                    constraints: const BoxConstraints(maxWidth: 600),
+                    constraints: const BoxConstraints(maxWidth: 500),
                     child: const Text(
-                      'Experience the future of trading with AI-powered insights, real-time market data, advanced technical analysis, and institutional-grade tools. Connect your Zerodha account and unlock the power of intelligent trading.',
+                      'Experience the future of trading with AI-powered insights, real-time market data, and institutional-grade tools.',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 16,
                         color: Colors.white70,
-                        height: 1.6,
-                        letterSpacing: 0.5,
+                        height: 1.4,
+                        letterSpacing: 0.3,
                       ),
                       textAlign: TextAlign.center,
                     ),
                   ),
 
-                  const SizedBox(height: 60),
+                  const SizedBox(height: 20),
 
-                  // CTA Buttons
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Consumer<AppState>(
-                        builder: (context, appState, child) {
-                          if (appState.isLoggedIn) {
-                            return Row(
-                              children: [
-                                ElevatedButton.icon(
-                                  onPressed: () => context.go('/dashboard'),
-                                  icon: const FaIcon(FontAwesomeIcons.chartLine, size: 20),
-                                  label: const Text('Go to Dashboard'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.amber,
-                                    foregroundColor: Colors.black,
-                                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-                                    textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                                    elevation: 10,
-                                    shadowColor: Colors.amber.withOpacity(0.5),
-                                  ),
-                                ),
-                                const SizedBox(width: 20),
-                                OutlinedButton.icon(
-                                  onPressed: () => context.go('/features'),
-                                  icon: const FaIcon(FontAwesomeIcons.star, size: 18),
-                                  label: const Text('Explore Features'),
-                                  style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(color: Colors.amber, width: 2),
-                                    foregroundColor: Colors.amber,
-                                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 18),
-                                    textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                                  ),
-                                ),
-                              ],
-                            );
-                          } else {
-                            return Column(
-                              children: [
-                                ElevatedButton.icon(
-                                  onPressed: () => _startLogin(context),
-                                  icon: const FaIcon(FontAwesomeIcons.signInAlt, size: 20),
-                                  label: const Text('Start Trading Now'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.amber,
-                                    foregroundColor: Colors.black,
-                                    padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 22),
-                                    textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(35)),
-                                    elevation: 15,
-                                    shadowColor: Colors.amber.withOpacity(0.6),
-                                  ),
-                                ),
-                                const SizedBox(height: 20),
-                                TextButton.icon(
-                                  onPressed: () => context.go('/demo'),
-                                  icon: const FaIcon(FontAwesomeIcons.play, size: 16),
-                                  label: const Text('Watch Demo'),
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: Colors.white70,
-                                    textStyle: const TextStyle(fontSize: 16),
-                                  ),
-                                ),
-                              ],
-                            );
-                          }
-                        },
-                      ),
-                    ],
+                  // Inspirational Quote
+                  const Text(
+                    'It\'s not possible! No, It\'s necessary!!',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w300,
+                      color: Colors.amber,
+                      fontStyle: FontStyle.italic,
+                      letterSpacing: 1.2,
+                      shadows: [
+                        Shadow(
+                          blurRadius: 8.0,
+                          color: Color(0x80FFD700),
+                          offset: Offset(0, 0),
+                        ),
+                      ],
+                    ),
+                    textAlign: TextAlign.center,
                   ),
 
-                  const SizedBox(height: 60),
+                  const SizedBox(height: 30),
+
+                  // CTA Button
+                  Consumer<AppState>(
+                    builder: (context, appState, child) {
+                      if (appState.isLoggedIn) {
+                        return ElevatedButton.icon(
+                          onPressed: () => context.go('/dashboard'),
+                          icon: const FaIcon(FontAwesomeIcons.chartLine, size: 20),
+                          label: const Text('Go to Dashboard'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.amber,
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                            textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                            elevation: 10,
+                            shadowColor: Colors.amber.withOpacity(0.5),
+                          ),
+                        );
+                      } else {
+                        return ElevatedButton.icon(
+                          onPressed: () => _startLogin(context),
+                          icon: const FaIcon(FontAwesomeIcons.signInAlt, size: 20),
+                          label: const Text('Get Started'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.amber,
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 22),
+                            textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(35)),
+                            elevation: 15,
+                            shadowColor: Colors.amber.withOpacity(0.6),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+
+                  const SizedBox(height: 30),
 
                   // Stats Row
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
+                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(15),
                       border: Border.all(color: Colors.amber.withOpacity(0.2)),
                     ),
                     child: Row(
@@ -1029,7 +940,7 @@ class HomePage extends StatelessWidget {
                 return ElevatedButton.icon(
                   onPressed: () => _startLogin(context),
                   icon: const FaIcon(FontAwesomeIcons.signInAlt, size: 18),
-                  label: const Text('Login with Zerodha'),
+                  label: const Text('Login'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.amber,
                     foregroundColor: Colors.black,
