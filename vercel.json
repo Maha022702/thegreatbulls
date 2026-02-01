@@ -1,10 +1,5 @@
 {
-  "buildCommand": "./build.sh",
   "outputDirectory": "build/web",
-  "installCommand": "chmod +x build.sh",
-  "env": {
-    "FLUTTER_BUILD_MODE": "release"
-  },
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ],
