@@ -2,12 +2,9 @@
   "buildCommand": "./build.sh",
   "outputDirectory": "build/web",
   "installCommand": "chmod +x build.sh",
-  "projectSettings": {
-    "sourceFilesOutsideRootDirectory": true
+  "env": {
+    "FLUTTER_BUILD_MODE": "release"
   },
-  "env": [
-    "FLUTTER_BUILD_MODE=release"
-  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ],
