@@ -30,8 +30,15 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  static bool _isAdminSubdomain() {
+    final hostname = html.window.location.hostname ?? '';
+    return hostname.startsWith('admin.');
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isAdmin = _isAdminSubdomain();
+
     return ChangeNotifierProvider(
       create: (context) {
         final appState = AppState();
@@ -39,7 +46,7 @@ class MyApp extends StatelessWidget {
         return appState;
       },
       child: MaterialApp.router(
-        title: 'The Great Bulls - Stock Market Analysis',
+        title: isAdmin ? 'Admin Panel - The Great Bulls' : 'The Great Bulls - Stock Market Analysis',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           useMaterial3: true,
@@ -53,7 +60,7 @@ class MyApp extends StatelessWidget {
             foregroundColor: Colors.amber,
           ),
         ),
-        routerConfig: _router,
+        routerConfig: isAdmin ? _adminRouter : _router,
       ),
     );
   }
@@ -127,6 +134,27 @@ final GoRouter _router = GoRouter(
       redirect: (context, state) => '/dashboard',
     ),
   ],
+);
+
+// Router for admin subdomain only
+final GoRouter _adminRouter = GoRouter(
+  routes: [
+    GoRoute(
+      path: '/',
+      builder: (context, state) => const AdminPanel(),
+    ),
+    GoRoute(
+      path: '/admin',
+      builder: (context, state) => const AdminPanel(),
+    ),
+  ],
+  redirect: (context, state) {
+    // Always redirect to admin panel for admin subdomain
+    if (state.matchedLocation != '/') {
+      return '/';
+    }
+    return null;
+  },
 );
 
 class AppState extends ChangeNotifier {
