@@ -140,6 +140,10 @@ final GoRouter _router = GoRouter(
 final GoRouter _adminRouter = GoRouter(
   routes: [
     GoRoute(
+      path: '/login',
+      builder: (context, state) => const AdminLoginPage(),
+    ),
+    GoRoute(
       path: '/',
       builder: (context, state) => const AdminPanel(),
     ),
@@ -149,17 +153,226 @@ final GoRouter _adminRouter = GoRouter(
     ),
   ],
   redirect: (context, state) {
-    // Always redirect to admin panel for admin subdomain
-    if (state.matchedLocation != '/') {
+    final appState = Provider.of<AppState>(context, listen: false);
+    final isLoggedIn = appState.isAdminLoggedIn;
+
+    // If not logged in and not on login page, redirect to login
+    if (!isLoggedIn && state.matchedLocation != '/login') {
+      return '/login';
+    }
+
+    // If logged in and on login page, redirect to admin panel
+    if (isLoggedIn && state.matchedLocation == '/login') {
       return '/';
     }
+
+    // Always redirect other paths to admin panel for admin subdomain
+    if (state.matchedLocation != '/' && state.matchedLocation != '/login') {
+      return '/';
+    }
+
     return null;
   },
 );
 
+class AdminLoginPage extends StatefulWidget {
+  const AdminLoginPage({super.key});
+
+  @override
+  State<AdminLoginPage> createState() => _AdminLoginPageState();
+}
+
+class _AdminLoginPageState extends State<AdminLoginPage> {
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _login() async {
+    if (_usernameController.text.isEmpty || _passwordController.text.isEmpty) {
+      setState(() {
+        _errorMessage = 'Please enter both username and password';
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final appState = Provider.of<AppState>(context, listen: false);
+    final success = await appState.adminLogin(
+      _usernameController.text,
+      _passwordController.text,
+    );
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (success) {
+      if (mounted) {
+        context.go('/');
+      }
+    } else {
+      setState(() {
+        _errorMessage = 'Invalid username or password';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 400),
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Logo/Title
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const FaIcon(FontAwesomeIcons.crown, color: Colors.amber, size: 48),
+                  const SizedBox(width: 16),
+                  Text(
+                    'Admin Login',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      color: Colors.amber,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 48),
+
+              // Username field
+              TextField(
+                controller: _usernameController,
+                decoration: InputDecoration(
+                  labelText: 'Username',
+                  labelStyle: const TextStyle(color: Colors.amber),
+                  border: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Colors.amber),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Colors.amber),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Colors.amber, width: 2),
+                  ),
+                  prefixIcon: const Icon(Icons.person, color: Colors.amber),
+                ),
+                style: const TextStyle(color: Colors.white),
+                onSubmitted: (_) => _login(),
+              ),
+              const SizedBox(height: 16),
+
+              // Password field
+              TextField(
+                controller: _passwordController,
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  labelStyle: const TextStyle(color: Colors.amber),
+                  border: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Colors.amber),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Colors.amber),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Colors.amber, width: 2),
+                  ),
+                  prefixIcon: const Icon(Icons.lock, color: Colors.amber),
+                ),
+                style: const TextStyle(color: Colors.white),
+                obscureText: true,
+                onSubmitted: (_) => _login(),
+              ),
+              const SizedBox(height: 24),
+
+              // Error message
+              if (_errorMessage != null)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    border: Border.all(color: Colors.red),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _errorMessage!,
+                    style: const TextStyle(color: Colors.red),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+
+              if (_errorMessage != null) const SizedBox(height: 16),
+
+              // Login button
+              ElevatedButton(
+                onPressed: _isLoading ? null : _login,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.amber,
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                        ),
+                      )
+                    : const Text(
+                        'Login',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Footer
+              Text(
+                'The Great Bulls - Admin Panel',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class AppState extends ChangeNotifier {
   bool isLoggedIn = false;
   String userName = 'Guest';
+  bool isAdminLoggedIn = false;
 
   Future<void> checkLoginStatus() async {
     isLoggedIn = await KiteOAuthService.isLoggedIn();
@@ -180,6 +393,21 @@ class AppState extends ChangeNotifier {
     await KiteOAuthService.logout();
     isLoggedIn = false;
     userName = 'Guest';
+    notifyListeners();
+  }
+
+  Future<bool> adminLogin(String username, String password) async {
+    // Check credentials
+    if (username == 'thegreatbull01' && password == 'MnLkPo9182') {
+      isAdminLoggedIn = true;
+      notifyListeners();
+      return true;
+    }
+    return false;
+  }
+
+  void adminLogout() {
+    isAdminLoggedIn = false;
     notifyListeners();
   }
 }

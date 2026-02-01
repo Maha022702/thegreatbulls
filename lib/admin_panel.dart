@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:provider/provider.dart';
+import 'main.dart';
 
 class AdminPanel extends StatefulWidget {
   const AdminPanel({super.key});
@@ -53,6 +55,15 @@ class _AdminPanelState extends State<AdminPanel> {
             icon: const Icon(Icons.notifications, color: Colors.amber),
             onPressed: () {},
             tooltip: 'Notifications',
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.amber),
+            onPressed: () {
+              final appState = Provider.of<AppState>(context, listen: false);
+              appState.adminLogout();
+              context.go('/login');
+            },
+            tooltip: 'Logout',
           ),
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
