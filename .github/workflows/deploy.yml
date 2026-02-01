@@ -11,8 +11,8 @@ on:
       - master
 
 env:
-  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  VERCEL_ORG_ID: team_Q8QQ53jzRFilId7m9GCai18P
+  VERCEL_PROJECT_ID: prj_EmWMk3qcrDyMMgElvnrkkYpoZjZ9
 
 jobs:
   deploy:

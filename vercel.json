@@ -1,11 +1,16 @@
 {
+  "buildCommand": null,
   "outputDirectory": "build/web",
+  "installCommand": "echo 'Using pre-built files'",
+  "github": {
+    "silent": true
+  },
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
     {
-      "source": "/.*",
+      "source": "/(.*)",
       "headers": [
         {
           "key": "Cache-Control",
