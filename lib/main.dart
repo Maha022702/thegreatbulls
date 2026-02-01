@@ -20,6 +20,7 @@ import 'setup_guide_page.dart';
 import 'patterns_page.dart';
 import 'insights_page.dart';
 import 'ai_predictions_page.dart';
+import 'admin_panel.dart';
 
 void main() {
   usePathUrlStrategy();
@@ -111,6 +112,10 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/auth/callback',
       builder: (context, state) => const AuthCallbackPage(),
+    ),
+    GoRoute(
+      path: '/admin',
+      builder: (context, state) => const AdminPanel(),
     ),
     // Redirects for old routes
     GoRoute(
@@ -261,6 +266,11 @@ class HomePage extends StatelessWidget {
                   TextButton(
                     onPressed: () => context.go('/setup-guide'),
                     child: const Text('Education', style: TextStyle(color: Colors.white, fontSize: 16)),
+                  ),
+                  const SizedBox(width: 20),
+                  TextButton(
+                    onPressed: () => context.go('/admin'),
+                    child: const Text('Admin', style: TextStyle(color: Colors.amber, fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                   const SizedBox(width: 20),
                   TextButton(

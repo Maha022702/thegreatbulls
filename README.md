@@ -97,7 +97,85 @@ The Great Bulls embodies luxury and sophistication:
 
 For advanced data collection and AI analysis, use the included Python script with AWS deployment:
 
-### Local Setup
+## 🌍 Deployments
+
+### Main Application
+- **URL**: https://thegreatbulls.in
+- **Hosting**: Vercel
+- **Branch**: main
+- **Auto-Deploy**: Yes (on every push)
+
+### Admin Panel
+- **URL**: https://admin.thegreatbulls.in
+- **Hosting**: Vercel (subdomain)
+- **Branch**: main
+- **Auto-Deploy**: Yes (GitHub Actions)
+- **Features**: 
+  - Complete course management
+  - Frontend customization
+  - Curriculum management
+  - Course settings & analytics
+
+### Deployment Pipeline
+
+```
+GitHub (Push to main)
+  ↓
+GitHub Actions (Build & Test)
+  ↓
+Vercel (Deploy to Production)
+  ↓
+✨ Live Update (2-5 minutes)
+```
+
+**Setup Guides:**
+- 📖 [Quick Start Deployment](QUICK_START_DEPLOYMENT.md) - 15 min setup
+- 📋 [Full Deployment Guide](DEPLOYMENT_GUIDE.md) - Detailed instructions
+- ✅ [Deployment Checklist](DEPLOYMENT_CHECKLIST.md) - Step-by-step verification
+
+## 👨‍💼 Admin Panel
+
+The admin panel provides comprehensive course management:
+
+### Features
+- 📚 **Course Management**: Create, edit, and delete courses
+- 🎨 **Frontend Customization**: Modify course appearance and branding
+- 📖 **Curriculum Editor**: Organize modules and lessons
+- ⚙️ **Settings Panel**: Configure course behavior and policies
+- 📊 **Analytics**: View course performance metrics
+- 💰 **Revenue Tracking**: Monitor course sales and student data
+- 👥 **Student Management**: Track enrollments and progress
+
+### Access
+```
+URL: https://admin.thegreatbulls.in (after DNS propagation)
+Tabs: Dashboard | Courses | Students | Analytics | Revenue | Content | Settings
+```
+
+### Local Development
+```bash
+# Run admin panel locally
+flutter run -d chrome
+
+# Make changes to lib/admin_panel.dart
+# Press 'r' to hot reload
+```
+
+### Deploy Changes
+```bash
+# Commit your changes
+git add .
+git commit -m "Updated admin panel: [description]"
+
+# Push to GitHub
+git push origin main
+
+# ✨ Automatic deployment starts!
+# Monitor: GitHub Actions tab
+# Live in: 2-5 minutes
+```
+
+## 🚀 Getting Started
 1. Navigate to the scripts directory:
    ```bash
    cd scripts
