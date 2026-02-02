@@ -4,6 +4,7 @@
  * 
  * This function automatically commits education tab courses to GitHub
  * Called by the admin panel when education courses are saved
+ * Version: 1.0.1
  */
 
 const https = require('https');
