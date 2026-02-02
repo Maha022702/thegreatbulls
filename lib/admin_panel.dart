@@ -2192,7 +2192,7 @@ class _AdminPanelState extends State<AdminPanel> {
           const SizedBox(height: 12),
 
           // Details
-          _buildEducationCourseDetailRow('Price:', course.price),
+          _buildEducationCourseDetailRow('Price:', '₹${course.price}'),
           _buildEducationCourseDetailRow('Duration:', course.duration),
           _buildEducationCourseDetailRow('Details:', course.details),
           const SizedBox(height: 12),
@@ -2254,7 +2254,7 @@ class _AdminPanelState extends State<AdminPanel> {
   void _showEducationCourseEditor(int index, EducationTabCourse course) {
     final titleController = TextEditingController(text: course.title);
     final descriptionController = TextEditingController(text: course.description);
-    final priceController = TextEditingController(text: course.price);
+    final priceController = TextEditingController(text: course.price.toString());
     final durationController = TextEditingController(text: course.duration);
     final detailsController = TextEditingController(text: course.details);
     final featuresController = TextEditingController(text: course.features.join('\n'));
@@ -2362,7 +2362,7 @@ class _AdminPanelState extends State<AdminPanel> {
                             description: descriptionController.text,
                             icon: course.icon,
                             color: selectedColor,
-                            price: priceController.text,
+                            price: int.tryParse(priceController.text) ?? course.price,
                             duration: durationController.text,
                             features: featuresController.text.split('\n').where((f) => f.isNotEmpty).toList(),
                             details: detailsController.text,
