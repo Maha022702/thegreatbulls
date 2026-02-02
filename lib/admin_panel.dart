@@ -3746,13 +3746,16 @@ class _AdminPanelState extends State<AdminPanel> {
     final appState = Provider.of<AppState>(context, listen: false);
     appState.currentEducationContent = content;
 
-    // Save to a JSON file in the project (this will be committed to git)
+    // Save to localStorage
     _saveContentToFile(content);
+
+    // Attempt to commit to GitHub
+    _commitToGitHub(content);
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Education content updated! Changes will be deployed automatically.'),
-        backgroundColor: Colors.green,
+        content: Text('Education content updated! Saving and deploying...'),
+        backgroundColor: Colors.blue,
         duration: Duration(seconds: 4),
       ),
     );
@@ -3787,6 +3790,53 @@ class _AdminPanelState extends State<AdminPanel> {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  void _commitToGitHub(EducationContent content) async {
+    try {
+      final contentJson = jsonEncode(content.toJson());
+      final adminToken = html.window.localStorage['admin_token'] ?? 'default-token';
+
+      final response = await html.window.fetch(
+        '/api/github/commit-education-content',
+        {
+          'method': 'POST',
+          'headers': {
+            'Content-Type': 'application/json',
+            'X-Admin-Token': adminToken,
+          },
+          'body': jsonEncode({
+            'content': contentJson,
+            'message': '📚 Update education content from admin panel',
+          }),
+        },
+      ) as dynamic;
+
+      if (response.ok) {
+        final responseData = await (response.json() as dynamic);
+        print('GitHub commit successful: ${responseData['commitSha']}');
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ Committed to GitHub: ${responseData['commitSha']}'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      } else {
+        print('GitHub commit failed: ${response.status}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('⚠️ Could not commit to GitHub (manual commit may be needed)'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error committing to GitHub: $e');
+      // Don't block UI - just log the error
     }
   }
 
