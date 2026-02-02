@@ -388,8 +388,10 @@ class AppState extends ChangeNotifier {
   String userName = 'Guest';
   bool isAdminLoggedIn = false;
   EducationContent _currentEducationContent = EducationContent.defaultContent();
+  List<Course> _courses = [];
 
   EducationContent get currentEducationContent => _currentEducationContent;
+  List<Course> get courses => _courses;
 
   set currentEducationContent(EducationContent content) {
     _currentEducationContent = content;
@@ -399,8 +401,36 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setCourses(List<Course> newCourses) {
+    _courses = newCourses;
+    // Save to localStorage
+    final coursesJson = jsonEncode(_courses.map((c) => c.toJson()).toList());
+    html.window.localStorage['courses'] = coursesJson;
+    notifyListeners();
+  }
+
+  void addCourse(Course course) {
+    _courses.add(course);
+    setCourses(_courses);
+  }
+
+  void updateCourse(int index, Course course) {
+    if (index >= 0 && index < _courses.length) {
+      _courses[index] = course;
+      setCourses(_courses);
+    }
+  }
+
+  void removeCourse(int index) {
+    if (index >= 0 && index < _courses.length) {
+      _courses.removeAt(index);
+      setCourses(_courses);
+    }
+  }
+
   AppState() {
     _loadEducationContent();
+    _loadCourses();
   }
 
   void _loadEducationContent() {
@@ -413,6 +443,19 @@ class AppState extends ChangeNotifier {
     } catch (e) {
       // If loading fails, keep default content
       print('Error loading education content: $e');
+    }
+  }
+
+  void _loadCourses() {
+    try {
+      final storedCourses = html.window.localStorage['courses'];
+      if (storedCourses != null && storedCourses.isNotEmpty) {
+        final coursesJson = jsonDecode(storedCourses) as List;
+        _courses = coursesJson.map((c) => Course.fromJson(c)).toList();
+      }
+    } catch (e) {
+      print('Error loading courses: $e');
+      _courses = [];
     }
   }
 

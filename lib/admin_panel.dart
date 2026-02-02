@@ -2624,102 +2624,293 @@ class _AdminPanelState extends State<AdminPanel> {
 
   // Action Methods
   void _showAddCourseDialog() {
+    final titleController = TextEditingController();
+    final descriptionController = TextEditingController();
+    final priceController = TextEditingController();
+    final categoryController = TextEditingController();
+    final durationController = TextEditingController();
+    String selectedLevel = 'Beginner';
+    List<CourseResource> resources = [];
+
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.grey[900],
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Container(
-          width: 600,
-          padding: const EdgeInsets.all(24),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    const Text(
-                      'Create New Course',
-                      style: TextStyle(
-                        color: Colors.amber,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => Dialog(
+          backgroundColor: Colors.grey[900],
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Container(
+            width: 800,
+            constraints: const BoxConstraints(maxHeight: 800),
+            padding: const EdgeInsets.all(24),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      const Text(
+                        '📚 Create New Course',
+                        style: TextStyle(
+                          color: Colors.amber,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.amber),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                // Form Fields
-                _buildFormField('Course Title', 'e.g., Advanced Options Trading'),
-                const SizedBox(height: 16),
-                _buildFormField('Description', 'Course description'),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildFormField('Price (₹)', '5,999'),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildFormField('Instructor', 'Instructor name'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildFormField('Duration', '8 weeks'),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildFormField('Modules', '12'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.amber),
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.amber),
+                        onPressed: () => Navigator.pop(context),
                       ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(color: Colors.amber),
-                      ),
+                    ],
+                  ),
+                  const Divider(color: Colors.amber),
+                  const SizedBox(height: 16),
+                  
+                  // Course Details Section
+                  const Text(
+                    'Course Details',
+                    style: TextStyle(
+                      color: Colors.amber,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(width: 12),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Course created successfully!'),
-                            backgroundColor: Colors.green,
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  _buildFormField(titleController, 'Course Title', 'e.g., Advanced Options Trading'),
+                  const SizedBox(height: 12),
+                  _buildFormField(descriptionController, 'Description', 'Course description', maxLines: 3),
+                  const SizedBox(height: 12),
+                  
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildFormField(priceController, 'Price (₹)', '5,999'),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildFormField(categoryController, 'Category', 'e.g., Equity, Options'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildFormField(durationController, 'Duration (days)', '60'),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Level',
+                              style: TextStyle(
+                                color: Colors.amber,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            DropdownButton<String>(
+                              value: selectedLevel,
+                              dropdownColor: Colors.grey[800],
+                              style: const TextStyle(color: Colors.white),
+                              isExpanded: true,
+                              items: ['Beginner', 'Intermediate', 'Advanced']
+                                  .map((level) => DropdownMenuItem(
+                                        value: level,
+                                        child: Text(level),
+                                      ))
+                                  .toList(),
+                              onChanged: (value) {
+                                setState(() {
+                                  selectedLevel = value ?? 'Beginner';
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  const Divider(color: Colors.amber),
+                  
+                  // Resources Section
+                  Row(
+                    children: [
+                      const Text(
+                        'Course Resources',
+                        style: TextStyle(
+                          color: Colors.amber,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            resources.add(CourseResource(
+                              id: DateTime.now().millisecondsSinceEpoch.toString(),
+                              name: 'New Resource',
+                              type: 'DOCUMENT',
+                              url: '',
+                              description: '',
+                              sizeBytes: 0,
+                            ));
+                          });
+                        },
+                        icon: const FaIcon(FontAwesomeIcons.plus, size: 14),
+                        label: const Text('Add Resource'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.amber.withOpacity(0.7),
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  // Resources List
+                  if (resources.isNotEmpty)
+                    Column(
+                      children: List.generate(resources.length, (index) {
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      resources[index].name,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${resources[index].type} • ${resources[index].description}',
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(0.6),
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () {
+                                  setState(() {
+                                    resources.removeAt(index);
+                                  });
+                                },
+                              ),
+                            ],
                           ),
                         );
-                        Navigator.pop(context);
-                      },
-                      icon: const FaIcon(FontAwesomeIcons.check, size: 16),
-                      label: const Text('Create Course'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.amber,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      }),
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'No resources added yet. Click "Add Resource" to upload course materials.',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.5),
+                          ),
+                        ),
                       ),
                     ),
-                  ],
-                ),
-              ],
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Action Buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.amber),
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        ),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(color: Colors.amber),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          if (titleController.text.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please enter course title'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            return;
+                          }
+
+                          final newCourse = Course(
+                            id: DateTime.now().millisecondsSinceEpoch.toString(),
+                            title: titleController.text,
+                            description: descriptionController.text,
+                            category: categoryController.text,
+                            price: double.tryParse(priceController.text) ?? 0,
+                            level: selectedLevel,
+                            durationDays: int.tryParse(durationController.text) ?? 0,
+                            modules: [],
+                            resources: resources,
+                            status: 'Active',
+                            createdDate: DateTime.now(),
+                            enrolledStudents: 0,
+                          );
+
+                          final appState = Provider.of<AppState>(context, listen: false);
+                          appState.addCourse(newCourse);
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('✅ Course created successfully!'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                          Navigator.pop(context);
+                        },
+                        icon: const FaIcon(FontAwesomeIcons.check, size: 16),
+                        label: const Text('Create Course'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.amber,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -2727,7 +2918,7 @@ class _AdminPanelState extends State<AdminPanel> {
     );
   }
 
-  Widget _buildFormField(String label, String hint) {
+  Widget _buildFormField(TextEditingController controller, String label, String hint, {int maxLines = 1}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2741,6 +2932,8 @@ class _AdminPanelState extends State<AdminPanel> {
         ),
         const SizedBox(height: 8),
         TextField(
+          controller: controller,
+          maxLines: maxLines,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
@@ -3798,6 +3991,18 @@ class _AdminPanelState extends State<AdminPanel> {
       final contentJson = jsonEncode(content.toJson());
       final adminToken = html.window.localStorage['admin_token'] ?? 'default-token';
 
+      print('🔍 DEBUG: Starting GitHub commit...');
+      print('🔍 DEBUG: Admin Token: ${adminToken.substring(0, 10)}...');
+      print('🔍 DEBUG: Content JSON length: ${contentJson.length} bytes');
+
+      final requestBody = jsonEncode({
+        'content': contentJson,
+        'message': '📚 Update education content from admin panel',
+      });
+
+      print('🔍 DEBUG: Request body size: ${requestBody.length} bytes');
+      print('🔍 DEBUG: Sending POST to /api/github/commit-education-content');
+
       final response = await html.window.fetch(
         '/api/github/commit-education-content',
         {
@@ -3806,37 +4011,55 @@ class _AdminPanelState extends State<AdminPanel> {
             'Content-Type': 'application/json',
             'X-Admin-Token': adminToken,
           },
-          'body': jsonEncode({
-            'content': contentJson,
-            'message': '📚 Update education content from admin panel',
-          }),
+          'body': requestBody,
         },
       ) as dynamic;
 
+      print('🔍 DEBUG: Response status: ${response.status}');
+      print('🔍 DEBUG: Response ok: ${response.ok}');
+
       if (response.ok) {
         final responseData = await (response.json() as dynamic);
-        print('GitHub commit successful: ${responseData['commitSha']}');
+        print('✅ GitHub commit successful: ${responseData['commitSha']}');
+        print('📝 Commit URL: ${responseData['commitUrl']}');
 
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('✅ Committed to GitHub: ${responseData['commitSha']}\n📝 ${responseData['commitUrl']}'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      } else {
+        final errorText = await (response.text() as dynamic);
+        print('❌ GitHub commit failed: ${response.status}');
+        print('❌ Error response: $errorText');
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('❌ GitHub API Error (${response.status}): Check console for details'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('❌ Error committing to GitHub: $e');
+      print('❌ Stack trace: ${StackTrace.current}');
+      
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ Committed to GitHub: ${responseData['commitSha']}'),
-            backgroundColor: Colors.green,
+            content: Text('❌ Error: $e\n📋 Check browser console for details'),
+            backgroundColor: Colors.red,
             duration: const Duration(seconds: 5),
           ),
         );
-      } else {
-        print('GitHub commit failed: ${response.status}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('⚠️ Could not commit to GitHub (manual commit may be needed)'),
-            backgroundColor: Colors.orange,
-            duration: Duration(seconds: 4),
-          ),
-        );
       }
-    } catch (e) {
-      print('Error committing to GitHub: $e');
-      // Don't block UI - just log the error
     }
   }
 

@@ -1,5 +1,152 @@
 import 'dart:convert';
 
+// Course Management Models
+class Course {
+  final String id;
+  final String title;
+  final String description;
+  final String category;
+  final double price;
+  final String level; // Beginner, Intermediate, Advanced
+  final int durationDays;
+  final List<CourseModule> modules;
+  final List<CourseResource> resources;
+  final String status; // Active, Draft, Archived
+  final DateTime createdDate;
+  final int enrolledStudents;
+
+  Course({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.category,
+    required this.price,
+    required this.level,
+    required this.durationDays,
+    required this.modules,
+    required this.resources,
+    required this.status,
+    required this.createdDate,
+    required this.enrolledStudents,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'category': category,
+      'price': price,
+      'level': level,
+      'durationDays': durationDays,
+      'modules': modules.map((m) => m.toJson()).toList(),
+      'resources': resources.map((r) => r.toJson()).toList(),
+      'status': status,
+      'createdDate': createdDate.toIso8601String(),
+      'enrolledStudents': enrolledStudents,
+    };
+  }
+
+  factory Course.fromJson(Map<String, dynamic> json) {
+    return Course(
+      id: json['id'] ?? '',
+      title: json['title'] ?? '',
+      description: json['description'] ?? '',
+      category: json['category'] ?? '',
+      price: (json['price'] as num?)?.toDouble() ?? 0.0,
+      level: json['level'] ?? 'Beginner',
+      durationDays: json['durationDays'] ?? 0,
+      modules: (json['modules'] as List<dynamic>?)
+          ?.map((m) => CourseModule.fromJson(m))
+          .toList() ?? [],
+      resources: (json['resources'] as List<dynamic>?)
+          ?.map((r) => CourseResource.fromJson(r))
+          .toList() ?? [],
+      status: json['status'] ?? 'Draft',
+      createdDate: json['createdDate'] != null 
+          ? DateTime.parse(json['createdDate'])
+          : DateTime.now(),
+      enrolledStudents: json['enrolledStudents'] ?? 0,
+    );
+  }
+}
+
+class CourseModule {
+  final String id;
+  final String title;
+  final String description;
+  final int durationMinutes;
+  final List<String> lessonIds;
+
+  CourseModule({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.durationMinutes,
+    required this.lessonIds,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'durationMinutes': durationMinutes,
+      'lessonIds': lessonIds,
+    };
+  }
+
+  factory CourseModule.fromJson(Map<String, dynamic> json) {
+    return CourseModule(
+      id: json['id'] ?? '',
+      title: json['title'] ?? '',
+      description: json['description'] ?? '',
+      durationMinutes: json['durationMinutes'] ?? 0,
+      lessonIds: List<String>.from(json['lessonIds'] ?? []),
+    );
+  }
+}
+
+class CourseResource {
+  final String id;
+  final String name;
+  final String type; // PDF, VIDEO, DOCUMENT, CODE
+  final String url;
+  final String description;
+  final int sizeBytes;
+
+  CourseResource({
+    required this.id,
+    required this.name,
+    required this.type,
+    required this.url,
+    required this.description,
+    required this.sizeBytes,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'type': type,
+      'url': url,
+      'description': description,
+      'sizeBytes': sizeBytes,
+    };
+  }
+
+  factory CourseResource.fromJson(Map<String, dynamic> json) {
+    return CourseResource(
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      type: json['type'] ?? 'DOCUMENT',
+      url: json['url'] ?? '',
+      description: json['description'] ?? '',
+      sizeBytes: json['sizeBytes'] ?? 0,
+    );
+  }
+}
+
 // Education content data structure
 class EducationContent {
   final String heroTitle;
