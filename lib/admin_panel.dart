@@ -2958,6 +2958,45 @@ class _AdminPanelState extends State<AdminPanel> {
     );
   }
 
+  // Overloaded version for simple label-hint usage (for existing code)
+  Widget _buildFormFieldSimple(String label, String hint) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.amber,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+            filled: true,
+            fillColor: Colors.black.withOpacity(0.3),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.amber.withOpacity(0.3)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.amber.withOpacity(0.3)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.amber, width: 2),
+            ),
+          ),
+          style: const TextStyle(color: Colors.white),
+        ),
+      ],
+    );
+  }
+
   void _showNotificationDialog() {
     // Implementation for sending notifications
     ScaffoldMessenger.of(context).showSnackBar(
@@ -3128,37 +3167,37 @@ class _AdminPanelState extends State<AdminPanel> {
       children: [
         const Text('Course Information', style: TextStyle(color: Colors.amber, fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
-        _buildFormField('Course Title', course['title'] as String),
+        _buildFormFieldSimple('Course Title', course['title'] as String),
         const SizedBox(height: 16),
-        _buildFormField('Course Description', course['description'] as String),
+        _buildFormFieldSimple('Course Description', course['description'] as String),
         const SizedBox(height: 16),
         Row(
           children: [
-            Expanded(child: _buildFormField('Price (₹)', course['price'] as String)),
+            Expanded(child: _buildFormFieldSimple('Price (₹)', course['price'] as String)),
             const SizedBox(width: 16),
-            Expanded(child: _buildFormField('Discount %', '10')),
+            Expanded(child: _buildFormFieldSimple('Discount %', '10')),
           ],
         ),
         const SizedBox(height: 16),
         Row(
           children: [
-            Expanded(child: _buildFormField('Instructor Name', course['instructor'] as String)),
+            Expanded(child: _buildFormFieldSimple('Instructor Name', course['instructor'] as String)),
             const SizedBox(width: 16),
-            Expanded(child: _buildFormField('Instructor Email', 'instructor@example.com')),
+            Expanded(child: _buildFormFieldSimple('Instructor Email', 'instructor@example.com')),
           ],
         ),
         const SizedBox(height: 16),
         Row(
           children: [
-            Expanded(child: _buildFormField('Duration', course['duration'] as String)),
+            Expanded(child: _buildFormFieldSimple('Duration', course['duration'] as String)),
             const SizedBox(width: 16),
-            Expanded(child: _buildFormField('Skill Level', 'Intermediate')),
+            Expanded(child: _buildFormFieldSimple('Skill Level', 'Intermediate')),
           ],
         ),
         const SizedBox(height: 16),
-        _buildFormField('Course Category', 'Trading & Finance'),
+        _buildFormFieldSimple('Course Category', 'Trading & Finance'),
         const SizedBox(height: 16),
-        _buildFormField('Tags', 'stocks, trading, investing, finance'),
+        _buildFormFieldSimple('Tags', 'stocks, trading, investing, finance'),
       ],
     );
   }
@@ -3200,7 +3239,7 @@ class _AdminPanelState extends State<AdminPanel> {
           ),
         ),
         const SizedBox(height: 16),
-        _buildFormField('Thumbnail Alt Text', 'Learn trading from basics to advanced'),
+        _buildFormFieldSimple('Thumbnail Alt Text', 'Learn trading from basics to advanced'),
         const SizedBox(height: 16),
         const Text('Card Display Color', style: TextStyle(color: Colors.amber, fontSize: 14, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
@@ -3228,7 +3267,7 @@ class _AdminPanelState extends State<AdminPanel> {
           ],
         ),
         const SizedBox(height: 16),
-        _buildFormField('Short Description (for listing)', 'A concise description shown on course cards'),
+        _buildFormFieldSimple('Short Description (for listing)', 'A concise description shown on course cards'),
       ],
     );
   }
@@ -3328,9 +3367,9 @@ class _AdminPanelState extends State<AdminPanel> {
         const SizedBox(height: 16),
         Divider(color: Colors.amber.withOpacity(0.2)),
         const SizedBox(height: 16),
-        _buildFormField('Prerequisites', 'None'),
+        _buildFormFieldSimple('Prerequisites', 'None'),
         const SizedBox(height: 16),
-        _buildFormField('Max Enrollment', 'Unlimited'),
+        _buildFormFieldSimple('Max Enrollment', 'Unlimited'),
         const SizedBox(height: 16),
         const Text('Refund Policy', style: TextStyle(color: Colors.amber, fontSize: 14, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
