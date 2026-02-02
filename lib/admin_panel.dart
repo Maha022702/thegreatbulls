@@ -2441,7 +2441,7 @@ class _AdminPanelState extends State<AdminPanel> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'This will update the education tab in the main app with your changes.',
+              'This will update the education tab in the main app with your changes and commit to GitHub.',
               style: TextStyle(color: Colors.white.withOpacity(0.7)),
             ),
             const SizedBox(height: 12),
@@ -2458,14 +2458,8 @@ class _AdminPanelState extends State<AdminPanel> {
           ),
           ElevatedButton.icon(
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('✅ Education Tab changes published and saved locally!'),
-                  backgroundColor: Colors.green,
-                  duration: Duration(seconds: 3),
-                ),
-              );
               Navigator.pop(context);
+              _commitEducationChangesToGitHub(appState.educationTabCourses);
             },
             icon: const FaIcon(FontAwesomeIcons.check, size: 16),
             label: const Text('Publish Changes'),
@@ -4434,6 +4428,85 @@ class _AdminPanelState extends State<AdminPanel> {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  void _commitEducationChangesToGitHub(List<EducationTabCourse> courses) async {
+    try {
+      final coursesJson = jsonEncode(courses.map((c) => c.toJson()).toList());
+      final adminToken = html.window.localStorage['admin_token'] ?? 'default-token';
+
+      print('🔍 DEBUG: Starting Education Tab GitHub commit...');
+      print('🔍 DEBUG: Admin Token: ${adminToken.substring(0, 10)}...');
+      print('🔍 DEBUG: Courses JSON length: ${coursesJson.length} bytes');
+      print('🔍 DEBUG: Number of courses: ${courses.length}');
+
+      final requestBody = jsonEncode({
+        'courses': courses.map((c) => c.toJson()).toList(),
+        'message': '📚 Update education tab courses from admin panel',
+        'courseCount': courses.length,
+      });
+
+      print('🔍 DEBUG: Request body size: ${requestBody.length} bytes');
+      print('🔍 DEBUG: Sending POST to /api/github/commit-education-courses');
+
+      final response = await html.window.fetch(
+        '/api/github/commit-education-courses',
+        {
+          'method': 'POST',
+          'headers': {
+            'Content-Type': 'application/json',
+            'X-Admin-Token': adminToken,
+          },
+          'body': requestBody,
+        },
+      ) as dynamic;
+
+      print('🔍 DEBUG: Response status: ${response.status}');
+      print('🔍 DEBUG: Response ok: ${response.ok}');
+
+      if (response.ok) {
+        final responseData = await (response.json() as dynamic);
+        print('✅ GitHub commit successful: ${responseData['commitSha']}');
+        print('📝 Commit URL: ${responseData['commitUrl']}');
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('✅ Committed to GitHub: ${responseData['commitSha']}\n📝 ${responseData['commitUrl']}'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      } else {
+        final errorText = await (response.text() as dynamic);
+        print('❌ GitHub commit failed: ${response.status}');
+        print('❌ Error response: $errorText');
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('❌ GitHub API Error (${response.status}): Check console for details'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('❌ Error committing education changes to GitHub: $e');
+      print('❌ Stack trace: ${StackTrace.current}');
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Error: $e\n📋 Check browser console for details'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
     }
   }
 
