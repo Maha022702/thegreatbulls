@@ -18,14 +18,7 @@ class AdminPanel extends StatefulWidget {
 class _AdminPanelState extends State<AdminPanel> {
   int _selectedIndex = 0;
   final List<String> _tabs = [
-    'Dashboard',
-    'Courses',
-    'Students',
-    'Analytics',
-    'Revenue',
     'Education Tab',
-    'Content',
-    'Settings'
   ];
 
   @override
@@ -185,31 +178,13 @@ class _AdminPanelState extends State<AdminPanel> {
   }
 
   IconData _getTabIcon(int index) {
-    switch (index) {
-      case 0: return FontAwesomeIcons.chartPie;
-      case 1: return FontAwesomeIcons.graduationCap;
-      case 2: return FontAwesomeIcons.users;
-      case 3: return FontAwesomeIcons.chartBar;
-      case 4: return FontAwesomeIcons.rupeeSign;
-      case 5: return FontAwesomeIcons.bookOpen;  // Education Tab
-      case 6: return FontAwesomeIcons.fileVideo;
-      case 7: return FontAwesomeIcons.cog;
-      default: return FontAwesomeIcons.circle;
-    }
+    // Only Education Tab
+    return FontAwesomeIcons.bookOpen;
   }
 
   Widget _buildMainContent() {
-    switch (_selectedIndex) {
-      case 0: return _buildDashboard();
-      case 1: return _buildCoursesManagement();
-      case 2: return _buildStudentsManagement();
-      case 3: return _buildAnalytics();
-      case 4: return _buildRevenue();
-      case 5: return _buildEducationTabManager();  // NEW: Education Tab Manager
-      case 6: return _buildContentManagement();
-      case 7: return _buildSettings();
-      default: return _buildDashboard();
-    }
+    // Only Education Tab
+    return _buildEducationTabManager();
   }
 
   Widget _buildDashboard() {
