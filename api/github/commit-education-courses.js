@@ -256,8 +256,15 @@ export default async function handler(req, res) {
   try {
     // Verify authentication token
     const adminToken = req.headers['x-admin-token'];
-    if (adminToken !== process.env.ADMIN_TOKEN) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    const envToken = process.env.ADMIN_TOKEN;
+    
+    console.log('🔍 DEBUG: Received X-Admin-Token header:', adminToken ? adminToken.substring(0, 10) + '...' : 'MISSING');
+    console.log('🔍 DEBUG: Expected ADMIN_TOKEN env:', envToken ? envToken.substring(0, 10) + '...' : 'MISSING');
+    console.log('🔍 DEBUG: Token match:', adminToken === envToken);
+    
+    if (adminToken !== envToken) {
+      console.log('❌ Token mismatch - Unauthorized');
+      return res.status(401).json({ error: 'Unauthorized - Invalid admin token' });
     }
 
     // Get courses from request

@@ -4437,6 +4437,7 @@ class _AdminPanelState extends State<AdminPanel> {
 
       print('🔍 DEBUG: Starting Education Tab GitHub commit...');
       print('🔍 DEBUG: Admin Token: ${adminToken.substring(0, 10)}...');
+      print('🔍 DEBUG: Full Admin Token: $adminToken');
       print('🔍 DEBUG: Number of courses: ${courses.length}');
 
       final requestBody = jsonEncode({
@@ -4458,18 +4459,13 @@ class _AdminPanelState extends State<AdminPanel> {
           },
           'body': requestBody,
         },
-      );
+      ) as dynamic;
 
-      // Convert JS response to Dart-friendly format
-      final statusCode = response.status as int;
-      final isOk = response.ok as bool;
-      
-      print('🔍 DEBUG: Response status: $statusCode');
-      print('🔍 DEBUG: Response ok: $isOk');
+      print('🔍 DEBUG: Response status: ${response.status}');
+      print('🔍 DEBUG: Response ok: ${response.ok}');
 
-      if (isOk) {
-        final responseText = await response.text();
-        final responseData = jsonDecode(responseText);
+      if (response.ok) {
+        final responseData = await (response.json() as dynamic);
         
         print('✅ GitHub commit successful: ${responseData['commitSha']}');
         print('📝 Commit URL: ${responseData['commitUrl']}');
@@ -4484,14 +4480,14 @@ class _AdminPanelState extends State<AdminPanel> {
           );
         }
       } else {
-        final errorText = await response.text();
-        print('❌ GitHub commit failed: $statusCode');
+        final errorText = await (response.text() as dynamic);
+        print('❌ GitHub commit failed: ${response.status}');
         print('❌ Error response: $errorText');
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('❌ GitHub API Error ($statusCode): Check console for details'),
+              content: Text('❌ GitHub API Error (${response.status}): Check console for details'),
               backgroundColor: Colors.red,
               duration: const Duration(seconds: 5),
             ),
