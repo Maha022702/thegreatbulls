@@ -231,7 +231,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
 
     if (success) {
       // Set admin token for GitHub commits on successful login
-      html.window.localStorage['admin_token'] = 'eee054c1e3dc092c88389f6df88a6227cf05d70f73702e461c5df52734fcc3b5';
+      html.window.localStorage['admin_token'] = '9a90c082633bec136aae7e03a306428c7df93038ed1904ed25b48402b5551299';
       
       if (mounted) {
         context.go('/');
