@@ -79,15 +79,15 @@ async function getCurrentEducationContentFile() {
 }
 
 /**
- * Generate Dart code from education courses JSON
+ * Generate Dart code from education courses JSON - only the EducationTabCourse section
  */
-function generateEducationTabCoursesCode(coursesJson) {
+function generateEducationTabCoursesCode(coursesJson, existingFileContent) {
   let courses = Array.isArray(coursesJson) ? coursesJson : JSON.parse(coursesJson);
 
   // Build course list
   let coursesList = '';
   courses.forEach((course, index) => {
-    if (index > 0) coursesList += ',\n    ';
+    if (index > 0) coursesList += ',\n      ';
 
     // Build features list
     let features = '';
@@ -119,7 +119,106 @@ function generateEducationTabCoursesCode(coursesJson) {
     )`;
   });
 
-  const dartCode = `import 'dart:convert';
+  // If there's existing content, try to preserve other classes
+  if (existingFileContent) {
+    // Find the EducationTabCourse class start and end
+    const educationTabStart = existingFileContent.indexOf('class EducationTabCourse');
+    
+    if (educationTabStart !== -1) {
+      // Keep everything before EducationTabCourse
+      const beforeClass = existingFileContent.substring(0, educationTabStart);
+      
+      // Find where EducationTabCourse class ends (look for the next top-level class or end of file)
+      const afterClassStart = existingFileContent.indexOf('\nclass ', educationTabStart + 10);
+      const afterClass = afterClassStart !== -1 ? existingFileContent.substring(afterClassStart) : '';
+      
+      // Generate the new EducationTabCourse class
+      const newClassCode = `class EducationTabCourse {
+  final String id;
+  final String title;
+  final String description;
+  final String icon;
+  final String color;
+  final int price;
+  final String duration;
+  final List<String> features;
+  final String details;
+  final List<String> topics;
+
+  EducationTabCourse({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.color,
+    required this.price,
+    required this.duration,
+    required this.features,
+    required this.details,
+    required this.topics,
+  });
+
+  factory EducationTabCourse.defaultCourses() {
+    return EducationTabCourse.fromJson({});
+  }
+
+  static List<EducationTabCourse> defaultCourses() {
+    return [
+      ${coursesList}
+    ];
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'description': description,
+    'icon': icon,
+    'color': color,
+    'price': price,
+    'duration': duration,
+    'features': features,
+    'details': details,
+    'topics': topics,
+  };
+
+  factory EducationTabCourse.fromJson(Map<String, dynamic> json) {
+    if (json.isEmpty) {
+      return EducationTabCourse(
+        id: '',
+        title: '',
+        description: '',
+        icon: '',
+        color: 'blue',
+        price: 0,
+        duration: '',
+        features: [],
+        details: '',
+        topics: [],
+      );
+    }
+    return EducationTabCourse(
+      id: json['id'] ?? '',
+      title: json['title'] ?? '',
+      description: json['description'] ?? '',
+      icon: json['icon'] ?? '',
+      color: json['color'] ?? 'blue',
+      price: json['price'] ?? 0,
+      duration: json['duration'] ?? '',
+      features: List<String>.from(json['features'] ?? []),
+      details: json['details'] ?? '',
+      topics: List<String>.from(json['topics'] ?? []),
+    );
+  }
+}
+
+`;
+      
+      return beforeClass + newClassCode + afterClass;
+    }
+  }
+
+  // Fallback: generate complete file (should not happen if file exists)
+  return `import 'dart:convert';
 
 // Education tab course data structure
 class EducationTabCourse {
@@ -200,8 +299,6 @@ class EducationTabCourse {
   }
 }
 `;
-
-  return dartCode;
 }
 
 /**
@@ -277,13 +374,13 @@ export default async function handler(req, res) {
 
     console.log(`📚 Processing ${courseCount || courses.length} education courses...`);
 
-    // Get current file SHA
+    // Get current file SHA and content
     console.log('Fetching current file from GitHub...');
     const currentFile = await getCurrentEducationContentFile();
 
-    // Generate Dart code from courses
+    // Generate Dart code from courses, preserving existing content
     console.log('Generating Dart code for education tab courses...');
-    const dartContent = generateEducationTabCoursesCode(courses);
+    const dartContent = generateEducationTabCoursesCode(courses, currentFile.content);
 
     // Commit to GitHub
     console.log('Committing education courses to GitHub...');
