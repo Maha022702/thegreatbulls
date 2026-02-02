@@ -4433,12 +4433,10 @@ class _AdminPanelState extends State<AdminPanel> {
 
   void _commitEducationChangesToGitHub(List<EducationTabCourse> courses) async {
     try {
-      final coursesJson = jsonEncode(courses.map((c) => c.toJson()).toList());
       final adminToken = html.window.localStorage['admin_token'] ?? 'default-token';
 
       print('🔍 DEBUG: Starting Education Tab GitHub commit...');
       print('🔍 DEBUG: Admin Token: ${adminToken.substring(0, 10)}...');
-      print('🔍 DEBUG: Courses JSON length: ${coursesJson.length} bytes');
       print('🔍 DEBUG: Number of courses: ${courses.length}');
 
       final requestBody = jsonEncode({
@@ -4460,13 +4458,19 @@ class _AdminPanelState extends State<AdminPanel> {
           },
           'body': requestBody,
         },
-      ) as dynamic;
+      );
 
-      print('🔍 DEBUG: Response status: ${response.status}');
-      print('🔍 DEBUG: Response ok: ${response.ok}');
+      // Convert JS response to Dart-friendly format
+      final statusCode = response.status as int;
+      final isOk = response.ok as bool;
+      
+      print('🔍 DEBUG: Response status: $statusCode');
+      print('🔍 DEBUG: Response ok: $isOk');
 
-      if (response.ok) {
-        final responseData = await (response.json() as dynamic);
+      if (isOk) {
+        final responseText = await response.text();
+        final responseData = jsonDecode(responseText);
+        
         print('✅ GitHub commit successful: ${responseData['commitSha']}');
         print('📝 Commit URL: ${responseData['commitUrl']}');
 
@@ -4480,14 +4484,14 @@ class _AdminPanelState extends State<AdminPanel> {
           );
         }
       } else {
-        final errorText = await (response.text() as dynamic);
-        print('❌ GitHub commit failed: ${response.status}');
+        final errorText = await response.text();
+        print('❌ GitHub commit failed: $statusCode');
         print('❌ Error response: $errorText');
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('❌ GitHub API Error (${response.status}): Check console for details'),
+              content: Text('❌ GitHub API Error ($statusCode): Check console for details'),
               backgroundColor: Colors.red,
               duration: const Duration(seconds: 5),
             ),
