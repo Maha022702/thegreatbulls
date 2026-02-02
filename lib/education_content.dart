@@ -33,19 +33,19 @@ class EducationTabCourse {
   static List<EducationTabCourse> defaultCourses() {
     return [
       EducationTabCourse(
-      id: 'test',
-      title: 'Test',
-      description: 'Test',
+      id: 'test2',
+      title: 'Test2',
+      description: 'Test2',
       icon: 'star',
       color: 'blue',
-      price: 1000,
-      duration: '1 month',
+      price: 2000,
+      duration: '2 months',
       features: [
-        'Test'
+        'Test2'
       ],
-      details: 'Test',
+      details: 'Test2',
       topics: [
-        'Test'
+        'Test2'
       ],
     )
     ];
