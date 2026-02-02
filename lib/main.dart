@@ -5,9 +5,11 @@ import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'dart:html' as html;
 import 'dart:ui';
+import 'dart:convert';
 import 'privacy_policy_page.dart';
 import 'refund_policy_page.dart';
 import 'faq_page.dart';
+import 'education_content.dart';
 import 'terms_and_conditions_page.dart';
 import 'kite_config.dart';
 import 'kite_oauth_service.dart';
@@ -151,10 +153,19 @@ final GoRouter _adminRouter = GoRouter(
       path: '/admin',
       builder: (context, state) => const AdminPanel(),
     ),
+    GoRoute(
+      path: '/features',
+      builder: (context, state) => const FeaturesPage(),
+    ),
   ],
   redirect: (context, state) {
     final appState = Provider.of<AppState>(context, listen: false);
     final isLoggedIn = appState.isAdminLoggedIn;
+
+    // Allow access to features page without login
+    if (state.matchedLocation == '/features') {
+      return null;
+    }
 
     // If not logged in and not on login page, redirect to login
     if (!isLoggedIn && state.matchedLocation != '/login') {
@@ -167,7 +178,7 @@ final GoRouter _adminRouter = GoRouter(
     }
 
     // Always redirect other paths to admin panel for admin subdomain
-    if (state.matchedLocation != '/' && state.matchedLocation != '/login') {
+    if (state.matchedLocation != '/' && state.matchedLocation != '/login' && state.matchedLocation != '/admin') {
       return '/';
     }
 
@@ -373,6 +384,34 @@ class AppState extends ChangeNotifier {
   bool isLoggedIn = false;
   String userName = 'Guest';
   bool isAdminLoggedIn = false;
+  EducationContent _currentEducationContent = EducationContent.defaultContent();
+
+  EducationContent get currentEducationContent => _currentEducationContent;
+
+  set currentEducationContent(EducationContent content) {
+    _currentEducationContent = content;
+    // Save to localStorage
+    final contentJson = jsonEncode(content.toJson());
+    html.window.localStorage['education_content'] = contentJson;
+    notifyListeners();
+  }
+
+  AppState() {
+    _loadEducationContent();
+  }
+
+  void _loadEducationContent() {
+    try {
+      final storedContent = html.window.localStorage['education_content'];
+      if (storedContent != null && storedContent.isNotEmpty) {
+        final contentJson = jsonDecode(storedContent);
+        _currentEducationContent = EducationContent.fromJson(contentJson);
+      }
+    } catch (e) {
+      // If loading fails, keep default content
+      print('Error loading education content: $e');
+    }
+  }
 
   Future<void> checkLoginStatus() async {
     isLoggedIn = await KiteOAuthService.isLoggedIn();

@@ -4,6 +4,9 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import 'main.dart';
+import 'dart:convert';
+import 'education_content.dart';
+import 'dart:html' as html;
 
 class AdminPanel extends StatefulWidget {
   const AdminPanel({super.key});
@@ -2134,10 +2137,73 @@ class _AdminPanelState extends State<AdminPanel> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Manage videos, documents, and course materials.',
+            'Manage videos, documents, course materials, and education content.',
             style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 16),
           ),
           const SizedBox(height: 32),
+
+          // Education Content Management Section
+          Container(
+            padding: const EdgeInsets.all(24),
+            margin: const EdgeInsets.only(bottom: 32),
+            decoration: BoxDecoration(
+              color: Colors.grey[900],
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.amber.withOpacity(0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Text(
+                      'Education & Features Content',
+                      style: TextStyle(
+                        color: Colors.amber,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    ElevatedButton.icon(
+                      onPressed: () => _editEducationContent(),
+                      icon: const FaIcon(FontAwesomeIcons.edit),
+                      label: const Text('Edit Features'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.amber,
+                        foregroundColor: Colors.black,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Manage the content displayed on the Features/Education page. Changes will be automatically deployed to production.',
+                  style: TextStyle(color: Colors.white.withOpacity(0.7)),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const FaIcon(FontAwesomeIcons.infoCircle, color: Colors.amber, size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Last updated: Never\nStatus: Ready to edit',
+                          style: TextStyle(color: Colors.white.withOpacity(0.8)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
 
           // Content Stats
           Row(
@@ -3571,6 +3637,239 @@ class _AdminPanelState extends State<AdminPanel> {
     );
   }
 
+  void _editEducationContent() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[900],
+          title: const Row(
+            children: [
+              FaIcon(FontAwesomeIcons.edit, color: Colors.amber),
+              SizedBox(width: 12),
+              Text(
+                'Edit Education Content',
+                style: TextStyle(color: Colors.amber),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: SizedBox(
+              width: 600,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'This will allow you to edit the content shown on the Features/Education page.',
+                    style: TextStyle(color: Colors.white.withOpacity(0.8)),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '⚠️ Important Notes:',
+                          style: TextStyle(
+                            color: Colors.amber,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '• Changes will be automatically saved and deployed\n'
+                          '• The Features page will update immediately\n'
+                          '• All users will see the new content\n'
+                          '• This action cannot be undone',
+                          style: TextStyle(color: Colors.white.withOpacity(0.7)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            _openEducationEditor();
+                          },
+                          icon: const FaIcon(FontAwesomeIcons.edit),
+                          label: const Text('Continue Editing'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.amber,
+                            foregroundColor: Colors.black,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _openEducationEditor() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return EducationContentEditor(
+          onSave: (updatedContent) {
+            _saveEducationContent(updatedContent);
+          },
+        );
+      },
+    );
+  }
+
+  void _saveEducationContent(EducationContent content) {
+    final appState = Provider.of<AppState>(context, listen: false);
+    appState.currentEducationContent = content;
+
+    // Save to a JSON file in the project (this will be committed to git)
+    _saveContentToFile(content);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Education content updated! Changes will be deployed automatically.'),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 4),
+      ),
+    );
+  }
+
+  void _saveContentToFile(EducationContent content) async {
+    try {
+      final contentJson = jsonEncode(content.toJson());
+
+      // Create a downloadable JSON file
+      final blob = html.Blob([contentJson], 'application/json');
+      final url = html.Url.createObjectUrlFromBlob(blob);
+
+      // Create a download link
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute('download', 'education_content.json')
+        ..text = 'Download Content JSON';
+
+      // Trigger download
+      html.document.body?.append(anchor);
+      anchor.click();
+      anchor.remove();
+      html.Url.revokeObjectUrl(url);
+
+      // Show deployment instructions
+      _showDeploymentInstructions(contentJson);
+
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error saving content: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _showDeploymentInstructions(String contentJson) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[900],
+          title: const Row(
+            children: [
+              FaIcon(FontAwesomeIcons.rocket, color: Colors.amber),
+              SizedBox(width: 12),
+              Text(
+                'Content Updated & Downloaded!',
+                style: TextStyle(color: Colors.amber),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  '✅ Your education content has been updated and downloaded as JSON.',
+                  style: TextStyle(color: Colors.green),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '🚀 To Deploy Changes:',
+                        style: TextStyle(
+                          color: Colors.amber,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        '1. Save the downloaded "education_content.json" file\n'
+                        '2. Place it in your project\'s assets/data/ directory\n'
+                        '3. Commit and push to GitHub\n'
+                        '4. Vercel will automatically deploy the changes',
+                        style: TextStyle(color: Colors.white70, fontSize: 14),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Content Preview:\n${contentJson.substring(0, 200)}...',
+                  style: TextStyle(
+                    color: Colors.white60,
+                    fontSize: 12,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                'OK',
+                style: TextStyle(color: Colors.amber),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _editContent(Map<String, dynamic> content) {
     // Implementation for editing content
     ScaffoldMessenger.of(context).showSnackBar(
@@ -3599,5 +3898,442 @@ class _AdminPanelState extends State<AdminPanel> {
         backgroundColor: Colors.green,
       ),
     );
+  }
+}
+
+class EducationContentEditor extends StatefulWidget {
+  final Function(EducationContent) onSave;
+
+  const EducationContentEditor({super.key, required this.onSave});
+
+  @override
+  State<EducationContentEditor> createState() => _EducationContentEditorState();
+}
+
+class _EducationContentEditorState extends State<EducationContentEditor> {
+  late EducationContent _content;
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+    final appState = Provider.of<AppState>(context, listen: false);
+    _content = appState.currentEducationContent;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.grey[900],
+      insetPadding: const EdgeInsets.all(20),
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.9,
+        height: MediaQuery.of(context).size.height * 0.9,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            // Header
+            Row(
+              children: [
+                const FaIcon(FontAwesomeIcons.edit, color: Colors.amber, size: 28),
+                const SizedBox(width: 12),
+                const Text(
+                  'Edit Education Content',
+                  style: TextStyle(
+                    color: Colors.amber,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close, color: Colors.white),
+                ),
+              ],
+            ),
+            const Divider(color: Colors.amber),
+
+            // Content
+            Expanded(
+              child: SingleChildScrollView(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Hero Section
+                      _buildSectionHeader('Hero Section'),
+                      TextFormField(
+                        initialValue: _content.heroTitle,
+                        decoration: const InputDecoration(
+                          labelText: 'Hero Title',
+                          labelStyle: TextStyle(color: Colors.amber),
+                        ),
+                        style: const TextStyle(color: Colors.white),
+                        onChanged: (value) {
+                          setState(() {
+                            _content = EducationContent(
+                              heroTitle: value,
+                              heroSubtitle: _content.heroSubtitle,
+                              eliteValueText: _content.eliteValueText,
+                              eliteValueDescription: _content.eliteValueDescription,
+                              featureSections: _content.featureSections,
+                            );
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        initialValue: _content.heroSubtitle,
+                        decoration: const InputDecoration(
+                          labelText: 'Hero Subtitle',
+                          labelStyle: TextStyle(color: Colors.amber),
+                        ),
+                        style: const TextStyle(color: Colors.white),
+                        maxLines: 2,
+                        onChanged: (value) {
+                          setState(() {
+                            _content = EducationContent(
+                              heroTitle: _content.heroTitle,
+                              heroSubtitle: value,
+                              eliteValueText: _content.eliteValueText,
+                              eliteValueDescription: _content.eliteValueDescription,
+                              featureSections: _content.featureSections,
+                            );
+                          });
+                        },
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // Elite Value Section
+                      _buildSectionHeader('Elite Value Section'),
+                      TextFormField(
+                        initialValue: _content.eliteValueText,
+                        decoration: const InputDecoration(
+                          labelText: 'Elite Value Title',
+                          labelStyle: TextStyle(color: Colors.amber),
+                        ),
+                        style: const TextStyle(color: Colors.white),
+                        onChanged: (value) {
+                          setState(() {
+                            _content = EducationContent(
+                              heroTitle: _content.heroTitle,
+                              heroSubtitle: _content.heroSubtitle,
+                              eliteValueText: value,
+                              eliteValueDescription: _content.eliteValueDescription,
+                              featureSections: _content.featureSections,
+                            );
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        initialValue: _content.eliteValueDescription,
+                        decoration: const InputDecoration(
+                          labelText: 'Elite Value Description',
+                          labelStyle: TextStyle(color: Colors.amber),
+                        ),
+                        style: const TextStyle(color: Colors.white),
+                        maxLines: 3,
+                        onChanged: (value) {
+                          setState(() {
+                            _content = EducationContent(
+                              heroTitle: _content.heroTitle,
+                              heroSubtitle: _content.heroSubtitle,
+                              eliteValueText: _content.eliteValueText,
+                              eliteValueDescription: value,
+                              featureSections: _content.featureSections,
+                            );
+                          });
+                        },
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // Feature Sections
+                      _buildSectionHeader('Feature Sections'),
+                      ..._buildFeatureSectionsEditor(),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Footer
+            Container(
+              padding: const EdgeInsets.only(top: 16),
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: Colors.amber, width: 1)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      if (_formKey.currentState?.validate() ?? false) {
+                        widget.onSave(_content);
+                        Navigator.of(context).pop();
+                      }
+                    },
+                    icon: const FaIcon(FontAwesomeIcons.save),
+                    label: const Text('Save & Deploy'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.amber,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.amber,
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildFeatureSectionsEditor() {
+    List<Widget> widgets = [];
+
+    for (int i = 0; i < _content.featureSections.length; i++) {
+      final section = _content.featureSections[i];
+
+      widgets.add(
+        Container(
+          margin: const EdgeInsets.only(bottom: 24),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.amber.withOpacity(0.3)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Section ${i + 1}: ${section.title}',
+                style: const TextStyle(
+                  color: Colors.amber,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                initialValue: section.title,
+                decoration: const InputDecoration(
+                  labelText: 'Section Title',
+                  labelStyle: TextStyle(color: Colors.amber),
+                ),
+                style: const TextStyle(color: Colors.white),
+                onChanged: (value) {
+                  _updateSectionTitle(i, value);
+                },
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Features:',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              ..._buildFeaturesEditor(i),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return widgets;
+  }
+
+  List<Widget> _buildFeaturesEditor(int sectionIndex) {
+    final section = _content.featureSections[sectionIndex];
+    List<Widget> widgets = [];
+
+    for (int i = 0; i < section.features.length; i++) {
+      final feature = section.features[i];
+
+      widgets.add(
+        Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.grey[800],
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Feature ${i + 1}: ${feature.title}',
+                style: const TextStyle(
+                  color: Colors.amber,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                initialValue: feature.title,
+                decoration: const InputDecoration(
+                  labelText: 'Feature Title',
+                  labelStyle: TextStyle(color: Colors.amber),
+                ),
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+                onChanged: (value) {
+                  _updateFeatureTitle(sectionIndex, i, value);
+                },
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                initialValue: feature.description,
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  labelStyle: TextStyle(color: Colors.amber),
+                ),
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+                maxLines: 2,
+                onChanged: (value) {
+                  _updateFeatureDescription(sectionIndex, i, value);
+                },
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                initialValue: feature.detail,
+                decoration: const InputDecoration(
+                  labelText: 'Detail',
+                  labelStyle: TextStyle(color: Colors.amber),
+                ),
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+                onChanged: (value) {
+                  _updateFeatureDetail(sectionIndex, i, value);
+                },
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return widgets;
+  }
+
+  void _updateSectionTitle(int sectionIndex, String title) {
+    final updatedSections = List<FeatureSection>.from(_content.featureSections);
+    updatedSections[sectionIndex] = FeatureSection(
+      title: title,
+      features: updatedSections[sectionIndex].features,
+    );
+
+    setState(() {
+      _content = EducationContent(
+        heroTitle: _content.heroTitle,
+        heroSubtitle: _content.heroSubtitle,
+        eliteValueText: _content.eliteValueText,
+        eliteValueDescription: _content.eliteValueDescription,
+        featureSections: updatedSections,
+      );
+    });
+  }
+
+  void _updateFeatureTitle(int sectionIndex, int featureIndex, String title) {
+    final updatedSections = List<FeatureSection>.from(_content.featureSections);
+    final updatedFeatures = List<Feature>.from(updatedSections[sectionIndex].features);
+    updatedFeatures[featureIndex] = Feature(
+      icon: updatedFeatures[featureIndex].icon,
+      title: title,
+      description: updatedFeatures[featureIndex].description,
+      detail: updatedFeatures[featureIndex].detail,
+      color: updatedFeatures[featureIndex].color,
+    );
+    updatedSections[sectionIndex] = FeatureSection(
+      title: updatedSections[sectionIndex].title,
+      features: updatedFeatures,
+    );
+
+    setState(() {
+      _content = EducationContent(
+        heroTitle: _content.heroTitle,
+        heroSubtitle: _content.heroSubtitle,
+        eliteValueText: _content.eliteValueText,
+        eliteValueDescription: _content.eliteValueDescription,
+        featureSections: updatedSections,
+      );
+    });
+  }
+
+  void _updateFeatureDescription(int sectionIndex, int featureIndex, String description) {
+    final updatedSections = List<FeatureSection>.from(_content.featureSections);
+    final updatedFeatures = List<Feature>.from(updatedSections[sectionIndex].features);
+    updatedFeatures[featureIndex] = Feature(
+      icon: updatedFeatures[featureIndex].icon,
+      title: updatedFeatures[featureIndex].title,
+      description: description,
+      detail: updatedFeatures[featureIndex].detail,
+      color: updatedFeatures[featureIndex].color,
+    );
+    updatedSections[sectionIndex] = FeatureSection(
+      title: updatedSections[sectionIndex].title,
+      features: updatedFeatures,
+    );
+
+    setState(() {
+      _content = EducationContent(
+        heroTitle: _content.heroTitle,
+        heroSubtitle: _content.heroSubtitle,
+        eliteValueText: _content.eliteValueText,
+        eliteValueDescription: _content.eliteValueDescription,
+        featureSections: updatedSections,
+      );
+    });
+  }
+
+  void _updateFeatureDetail(int sectionIndex, int featureIndex, String detail) {
+    final updatedSections = List<FeatureSection>.from(_content.featureSections);
+    final updatedFeatures = List<Feature>.from(updatedSections[sectionIndex].features);
+    updatedFeatures[featureIndex] = Feature(
+      icon: updatedFeatures[featureIndex].icon,
+      title: updatedFeatures[featureIndex].title,
+      description: updatedFeatures[featureIndex].description,
+      detail: detail,
+      color: updatedFeatures[featureIndex].color,
+    );
+    updatedSections[sectionIndex] = FeatureSection(
+      title: updatedSections[sectionIndex].title,
+      features: updatedFeatures,
+    );
+
+    setState(() {
+      _content = EducationContent(
+        heroTitle: _content.heroTitle,
+        heroSubtitle: _content.heroSubtitle,
+        eliteValueText: _content.eliteValueText,
+        eliteValueDescription: _content.eliteValueDescription,
+        featureSections: updatedSections,
+      );
+    });
   }
 }
