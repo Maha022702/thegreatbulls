@@ -389,9 +389,11 @@ class AppState extends ChangeNotifier {
   bool isAdminLoggedIn = false;
   EducationContent _currentEducationContent = EducationContent.defaultContent();
   List<Course> _courses = [];
+  List<EducationTabCourse> _educationTabCourses = EducationTabCourse.defaultCourses();
 
   EducationContent get currentEducationContent => _currentEducationContent;
   List<Course> get courses => _courses;
+  List<EducationTabCourse> get educationTabCourses => _educationTabCourses;
 
   set currentEducationContent(EducationContent content) {
     _currentEducationContent = content;
@@ -428,9 +430,25 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  // Education Tab Courses Management
+  void setEducationTabCourses(List<EducationTabCourse> newCourses) {
+    _educationTabCourses = newCourses;
+    final coursesJson = jsonEncode(_educationTabCourses.map((c) => c.toJson()).toList());
+    html.window.localStorage['education_tab_courses'] = coursesJson;
+    notifyListeners();
+  }
+
+  void updateEducationTabCourse(int index, EducationTabCourse course) {
+    if (index >= 0 && index < _educationTabCourses.length) {
+      _educationTabCourses[index] = course;
+      setEducationTabCourses(_educationTabCourses);
+    }
+  }
+
   AppState() {
     _loadEducationContent();
     _loadCourses();
+    _loadEducationTabCourses();
   }
 
   void _loadEducationContent() {
@@ -456,6 +474,19 @@ class AppState extends ChangeNotifier {
     } catch (e) {
       print('Error loading courses: $e');
       _courses = [];
+    }
+  }
+
+  void _loadEducationTabCourses() {
+    try {
+      final storedCourses = html.window.localStorage['education_tab_courses'];
+      if (storedCourses != null && storedCourses.isNotEmpty) {
+        final coursesJson = jsonDecode(storedCourses) as List;
+        _educationTabCourses = coursesJson.map((c) => EducationTabCourse.fromJson(c)).toList();
+      }
+    } catch (e) {
+      print('Error loading education tab courses: $e');
+      _educationTabCourses = EducationTabCourse.defaultCourses();
     }
   }
 

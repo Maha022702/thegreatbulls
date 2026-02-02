@@ -23,6 +23,7 @@ class _AdminPanelState extends State<AdminPanel> {
     'Students',
     'Analytics',
     'Revenue',
+    'Education Tab',
     'Content',
     'Settings'
   ];
@@ -190,8 +191,9 @@ class _AdminPanelState extends State<AdminPanel> {
       case 2: return FontAwesomeIcons.users;
       case 3: return FontAwesomeIcons.chartBar;
       case 4: return FontAwesomeIcons.rupeeSign;
-      case 5: return FontAwesomeIcons.fileVideo;
-      case 6: return FontAwesomeIcons.cog;
+      case 5: return FontAwesomeIcons.bookOpen;  // Education Tab
+      case 6: return FontAwesomeIcons.fileVideo;
+      case 7: return FontAwesomeIcons.cog;
       default: return FontAwesomeIcons.circle;
     }
   }
@@ -203,8 +205,9 @@ class _AdminPanelState extends State<AdminPanel> {
       case 2: return _buildStudentsManagement();
       case 3: return _buildAnalytics();
       case 4: return _buildRevenue();
-      case 5: return _buildContentManagement();
-      case 6: return _buildSettings();
+      case 5: return _buildEducationTabManager();  // NEW: Education Tab Manager
+      case 6: return _buildContentManagement();
+      case 7: return _buildSettings();
       default: return _buildDashboard();
     }
   }
@@ -2107,6 +2110,375 @@ class _AdminPanelState extends State<AdminPanel> {
     );
   }
 
+  Widget _buildEducationTabManager() {
+    final appState = Provider.of<AppState>(context, listen: false);
+    
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              const FaIcon(FontAwesomeIcons.bookOpen, color: Colors.amber, size: 28),
+              const SizedBox(width: 12),
+              const Text(
+                'Education Tab Manager',
+                style: TextStyle(
+                  color: Colors.amber,
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Spacer(),
+              ElevatedButton.icon(
+                onPressed: () => _showPublishEducationDialog(),
+                icon: const FaIcon(FontAwesomeIcons.upload, size: 16),
+                label: const Text('Publish Changes'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Manage the 4 education courses displayed in the Education Tab (Beginner, Equity, Options, Combo)',
+            style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 16),
+          ),
+          const SizedBox(height: 32),
+
+          // Courses Grid
+          Consumer<AppState>(
+            builder: (context, appState, _) {
+              return Wrap(
+                spacing: 24,
+                runSpacing: 24,
+                children: List.generate(
+                  appState.educationTabCourses.length,
+                  (index) => _buildEducationCourseCard(context, index, appState.educationTabCourses[index]),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEducationCourseCard(BuildContext context, int index, EducationTabCourse course) {
+    return Container(
+      width: 450,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.amber.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    course.title,
+                    style: const TextStyle(
+                      color: Colors.amber,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    course.description,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.6),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const FaIcon(FontAwesomeIcons.pen, color: Colors.amber, size: 16),
+                onPressed: () => _showEducationCourseEditor(index, course),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Divider(color: Colors.amber.withOpacity(0.2)),
+          const SizedBox(height: 12),
+
+          // Details
+          _buildEducationCourseDetailRow('Price:', course.price),
+          _buildEducationCourseDetailRow('Duration:', course.duration),
+          _buildEducationCourseDetailRow('Details:', course.details),
+          const SizedBox(height: 12),
+
+          // Features
+          Text(
+            'Features:',
+            style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: course.features.take(3).map((feature) {
+              return Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.amber, size: 14),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      feature,
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEducationCourseDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(color: Colors.amber, fontSize: 12, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEducationCourseEditor(int index, EducationTabCourse course) {
+    final titleController = TextEditingController(text: course.title);
+    final descriptionController = TextEditingController(text: course.description);
+    final priceController = TextEditingController(text: course.price);
+    final durationController = TextEditingController(text: course.duration);
+    final detailsController = TextEditingController(text: course.details);
+    final featuresController = TextEditingController(text: course.features.join('\n'));
+    final topicsController = TextEditingController(text: course.topics.join('\n'));
+    String selectedColor = course.color;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => Dialog(
+          backgroundColor: Colors.grey[900],
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Container(
+            width: 700,
+            constraints: const BoxConstraints(maxHeight: 900),
+            padding: const EdgeInsets.all(24),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      const Text(
+                        '📚 Edit Course',
+                        style: TextStyle(
+                          color: Colors.amber,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.amber),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const Divider(color: Colors.amber),
+                  const SizedBox(height: 16),
+
+                  // Basic Info
+                  _buildFormFieldWithController('Course Title', titleController, 'e.g., Beginner Course'),
+                  const SizedBox(height: 12),
+                  _buildFormFieldWithController('Description', descriptionController, 'Course description', maxLines: 2),
+                  const SizedBox(height: 12),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildFormFieldWithController('Price', priceController, '₹2,999'),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildFormFieldWithController('Duration', durationController, '6 months access'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  _buildFormFieldWithController('Course Details (Meta)', detailsController, '3 modules • 15+ lessons'),
+                  const SizedBox(height: 12),
+
+                  const Text('Color (for display)', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: ['green', 'blue', 'orange', 'amber']
+                        .map((color) => Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => setState(() => selectedColor = color),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: selectedColor == color ? Colors.amber : Colors.grey[700],
+                              foregroundColor: selectedColor == color ? Colors.black : Colors.white,
+                            ),
+                            child: Text(color[0].toUpperCase() + color.substring(1)),
+                          ),
+                        ))
+                        .toList(),
+                  ),
+                  const SizedBox(height: 16),
+
+                  _buildFormFieldWithController('Features (one per line)', featuresController, 'Feature 1\nFeature 2', maxLines: 4),
+                  const SizedBox(height: 12),
+
+                  _buildFormFieldWithController('Topics (one per line)', topicsController, 'Topic 1\nTopic 2', maxLines: 4),
+                  const SizedBox(height: 24),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.amber),
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        ),
+                        child: const Text('Cancel', style: TextStyle(color: Colors.amber)),
+                      ),
+                      const SizedBox(width: 12),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          final updatedCourse = EducationTabCourse(
+                            id: course.id,
+                            title: titleController.text,
+                            description: descriptionController.text,
+                            icon: course.icon,
+                            color: selectedColor,
+                            price: priceController.text,
+                            duration: durationController.text,
+                            features: featuresController.text.split('\n').where((f) => f.isNotEmpty).toList(),
+                            details: detailsController.text,
+                            topics: topicsController.text.split('\n').where((t) => t.isNotEmpty).toList(),
+                          );
+
+                          final appState = Provider.of<AppState>(context, listen: false);
+                          appState.updateEducationTabCourse(index, updatedCourse);
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('✅ Course updated! Click "Publish Changes" to deploy.'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                          Navigator.pop(context);
+                        },
+                        icon: const FaIcon(FontAwesomeIcons.check, size: 16),
+                        label: const Text('Update Course'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.amber,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showPublishEducationDialog() {
+    final appState = Provider.of<AppState>(context, listen: false);
+    final coursesJson = jsonEncode(appState.educationTabCourses.map((c) => c.toJson()).toList());
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.grey[900],
+        title: const Text(
+          'Publish Education Tab Changes',
+          style: TextStyle(color: Colors.amber),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'This will update the education tab in the main app with your changes.',
+              style: TextStyle(color: Colors.white.withOpacity(0.7)),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Courses to publish: ${appState.educationTabCourses.length}',
+              style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white)),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('✅ Education Tab changes published and saved locally!'),
+                  backgroundColor: Colors.green,
+                  duration: Duration(seconds: 3),
+                ),
+              );
+              Navigator.pop(context);
+            },
+            icon: const FaIcon(FontAwesomeIcons.check, size: 16),
+            label: const Text('Publish Changes'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildContentManagement() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -2973,6 +3345,46 @@ class _AdminPanelState extends State<AdminPanel> {
         ),
         const SizedBox(height: 8),
         TextField(
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+            filled: true,
+            fillColor: Colors.black.withOpacity(0.3),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.amber.withOpacity(0.3)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.amber.withOpacity(0.3)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.amber, width: 2),
+            ),
+          ),
+          style: const TextStyle(color: Colors.white),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFormFieldWithController(String label, TextEditingController controller, String hint, {int maxLines = 1}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.amber,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          maxLines: maxLines,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),

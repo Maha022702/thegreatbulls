@@ -1,5 +1,156 @@
 import 'dart:convert';
 
+// Education Tab Course Model - for setup_guide_page.dart courses
+class EducationTabCourse {
+  final String id;
+  final String title;
+  final String description;
+  final String icon; // Use FontAwesome icon name
+  final String color; // Color name (green, blue, orange, amber)
+  final String price;
+  final String duration;
+  final List<String> features;
+  final String details;
+  final List<String> topics;
+
+  EducationTabCourse({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.color,
+    required this.price,
+    required this.duration,
+    required this.features,
+    required this.details,
+    required this.topics,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'icon': icon,
+      'color': color,
+      'price': price,
+      'duration': duration,
+      'features': features,
+      'details': details,
+      'topics': topics,
+    };
+  }
+
+  factory EducationTabCourse.fromJson(Map<String, dynamic> json) {
+    return EducationTabCourse(
+      id: json['id'] ?? '',
+      title: json['title'] ?? '',
+      description: json['description'] ?? '',
+      icon: json['icon'] ?? 'seedling',
+      color: json['color'] ?? 'green',
+      price: json['price'] ?? '₹0',
+      duration: json['duration'] ?? '',
+      features: List<String>.from(json['features'] ?? []),
+      details: json['details'] ?? '',
+      topics: List<String>.from(json['topics'] ?? []),
+    );
+  }
+
+  // Default education tab courses
+  static List<EducationTabCourse> defaultCourses() {
+    return [
+      EducationTabCourse(
+        id: 'beginner',
+        title: 'Beginner Course',
+        description: 'Your foundation to stock market success',
+        icon: 'seedling',
+        color: 'green',
+        price: '₹2,999',
+        duration: '6 months access',
+        features: [
+          'Personal Trading Story',
+          'Stock Market Fundamentals',
+          'Technical Analysis Basics',
+          'Risk Management',
+          'Emotion Control',
+        ],
+        details: '3 modules • 15+ lessons • Community access',
+        topics: [
+          'Stock Market Fundamentals',
+          'Technical Analysis Basics',
+          'Risk Management',
+        ],
+      ),
+      EducationTabCourse(
+        id: 'equity',
+        title: 'Equity Trading Mastery',
+        description: 'Complete equity trading with community support',
+        icon: 'chartLine',
+        color: 'blue',
+        price: '₹5,999',
+        duration: '12 months access',
+        features: [
+          'Price Action Methods',
+          'Chart Patterns',
+          'Stock Selection Strategies',
+          'Custom Indicators',
+          'News Trading',
+        ],
+        details: '5 modules • 25+ lessons • Premium indicators',
+        topics: [
+          'Price Action Methods',
+          'Chart Patterns',
+          'Stock Selection Strategies',
+        ],
+      ),
+      EducationTabCourse(
+        id: 'options',
+        title: 'Option Buying Course',
+        description: 'Master options trading for high returns',
+        icon: 'bolt',
+        color: 'orange',
+        price: '₹7,999',
+        duration: '12 months access',
+        features: [
+          'Options Fundamentals',
+          'ITM, ATM, OTM Strategies',
+          'Stock Selection for Options',
+          'Intraday Strategies',
+          'Live Trade Videos',
+        ],
+        details: '6 modules • 20+ lessons • Strategy templates',
+        topics: [
+          'Options Fundamentals',
+          'ITM, ATM, OTM Strategies',
+          'Stock Selection for Options',
+        ],
+      ),
+      EducationTabCourse(
+        id: 'combo',
+        title: 'Complete Trading Bundle',
+        description: 'Equity + Options combo for serious traders',
+        icon: 'crown',
+        color: 'amber',
+        price: '₹12,999',
+        duration: 'Lifetime access',
+        features: [
+          'Full Equity Course',
+          'Full Options Course',
+          'Advanced Strategies',
+          'Priority Support',
+          'All Premium Tools',
+        ],
+        details: '10 modules • 45+ lessons • Elite community',
+        topics: [
+          'Full Equity Course',
+          'Full Options Course',
+          'Advanced Strategies',
+        ],
+      ),
+    ];
+  }
+}
+
 // Course Management Models
 class Course {
   final String id;
