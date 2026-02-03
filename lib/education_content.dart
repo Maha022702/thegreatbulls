@@ -26,6 +26,10 @@ class EducationTabCourse {
     required this.topics,
   });
 
+  factory EducationTabCourse.defaultCourses() {
+    return EducationTabCourse.fromJson({});
+  }
+
   static List<EducationTabCourse> defaultCourses() {
     return [
       EducationTabCourse(
@@ -34,7 +38,7 @@ class EducationTabCourse {
       description: 'Your foundation to stock market success',
       icon: 'seedling',
       color: 'green',
-      price: 3999,
+      price: 1999,
       duration: '6 months access',
       features: [
         'Personal Trading Story',
