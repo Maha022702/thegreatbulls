@@ -26,10 +26,6 @@ class EducationTabCourse {
     required this.topics,
   });
 
-  factory EducationTabCourse.defaultCourses() {
-    return EducationTabCourse.fromJson({});
-  }
-
   static List<EducationTabCourse> defaultCourses() {
     return [
       EducationTabCourse(

@@ -23,9 +23,11 @@ import 'patterns_page.dart';
 import 'insights_page.dart';
 import 'ai_predictions_page.dart';
 import 'admin_panel.dart';
+import 'test_fetch.dart';
 
-void main() {
+Future<void> main() async {
   usePathUrlStrategy();
+  await testFetch();
   runApp(const MyApp());
 }
 

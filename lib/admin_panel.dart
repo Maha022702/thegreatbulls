@@ -10,7 +10,7 @@ import 'package:provider/provider.dart';
 import 'education_content.dart';
 import 'main.dart';
 
-/// Lean admin panel focused exclusively on the Education Tab.
+/// Enhanced admin panel with multiple sections.
 class AdminPanel extends StatefulWidget {
   const AdminPanel({super.key});
 
@@ -18,19 +18,31 @@ class AdminPanel extends StatefulWidget {
   State<AdminPanel> createState() => _AdminPanelState();
 }
 
-class _AdminPanelState extends State<AdminPanel> {
+class _AdminPanelState extends State<AdminPanel> with TickerProviderStateMixin {
+  late TabController _tabController;
   bool _isSaving = false;
   String? _statusMessage;
 
   @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 7, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
-    final courses = appState.educationTabCourses;
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.black,
-        title: const Text('Education Tab Admin'),
+        title: const Text('Admin Panel'),
         actions: [
           IconButton(
             icon: const Icon(Icons.home),
@@ -46,63 +58,277 @@ class _AdminPanelState extends State<AdminPanel> {
             },
           ),
         ],
+        bottom: TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          tabs: const [
+            Tab(text: 'Dashboard'),
+            Tab(text: 'Courses'),
+            Tab(text: 'Students'),
+            Tab(text: 'Analytics'),
+            Tab(text: 'Revenue'),
+            Tab(text: 'Content'),
+            Tab(text: 'Settings'),
+          ],
+        ),
       ),
       body: Container(
         color: Colors.black,
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: TabBarView(
+          controller: _tabController,
           children: [
-            const Text(
-              'Only Education Tab is editable. Publishing pushes a GitHub commit so Vercel can deploy immediately.',
-              style: TextStyle(color: Colors.white70),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                ElevatedButton.icon(
-                  onPressed: _isSaving ? null : () => _commitEducationChangesToGitHub(courses),
-                  icon: _isSaving
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Icon(Icons.upload_file),
-                  label: Text(_isSaving ? 'Publishing...' : 'Publish Changes'),
-                ),
-                const SizedBox(width: 12),
-                if (_statusMessage != null)
-                  Expanded(
-                    child: Text(
-                      _statusMessage!,
-                      style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.w600),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: courses.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'Education Tab is empty. Update defaults or push new content via GitHub and refresh.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                    )
-                  : ListView.separated(
-                      itemCount: courses.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (_, index) => _buildCourseCard(courses[index], index, appState),
-                    ),
-            ),
+            _buildDashboardTab(),
+            _buildCoursesTab(appState),
+            _buildStudentsTab(),
+            _buildAnalyticsTab(),
+            _buildRevenueTab(),
+            _buildContentTab(appState),
+            _buildSettingsTab(),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildDashboardTab() {
+    return const Center(
+      child: Text(
+        'Dashboard - Coming Soon',
+        style: TextStyle(color: Colors.white),
+      ),
+    );
+  }
+
+  Widget _buildCoursesTab(AppState appState) {
+    final courses = appState.educationTabCourses;
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Education Courses Management',
+            style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              ElevatedButton.icon(
+                onPressed: _isSaving ? null : () => _commitEducationChangesToGitHub(courses),
+                icon: _isSaving
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Icon(Icons.upload_file),
+                label: Text(_isSaving ? 'Publishing...' : 'Publish Changes'),
+              ),
+              const SizedBox(width: 12),
+              if (_statusMessage != null)
+                Expanded(
+                  child: Text(
+                    _statusMessage!,
+                    style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.w600),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: courses.isEmpty
+                ? const Center(
+                    child: Text(
+                      'Education Tab is empty. Update defaults or push new content via GitHub and refresh.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  )
+                : ListView.separated(
+                    itemCount: courses.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (_, index) => _buildCourseCard(courses[index], index, appState),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStudentsTab() {
+    return const Center(
+      child: Text(
+        'Students Management - Coming Soon',
+        style: TextStyle(color: Colors.white),
+      ),
+    );
+  }
+
+  Widget _buildAnalyticsTab() {
+    return const Center(
+      child: Text(
+        'Analytics - Coming Soon',
+        style: TextStyle(color: Colors.white),
+      ),
+    );
+  }
+
+  Widget _buildRevenueTab() {
+    return const Center(
+      child: Text(
+        'Revenue Management - Coming Soon',
+        style: TextStyle(color: Colors.white),
+      ),
+    );
+  }
+
+  Widget _buildContentTab(AppState appState) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Education & Features Content',
+            style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: () => _showContentEditor(appState),
+            icon: const Icon(Icons.edit),
+            label: const Text('Edit Features'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsTab() {
+    return const Center(
+      child: Text(
+        'Settings - Coming Soon',
+        style: TextStyle(color: Colors.white),
+      ),
+    );
+  }
+
+  void _showContentEditor(AppState appState) {
+    final content = appState.currentEducationContent;
+    final heroTitleController = TextEditingController(text: content.heroTitle);
+    final heroSubtitleController = TextEditingController(text: content.heroSubtitle);
+    final eliteValueTitleController = TextEditingController(text: content.eliteValueText);
+    final eliteValueDescriptionController = TextEditingController(text: content.eliteValueDescription);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Education Content'),
+          backgroundColor: Colors.grey[900],
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildTextField('Hero Title', heroTitleController),
+                _buildTextField('Hero Subtitle', heroSubtitleController, maxLines: 2),
+                _buildTextField('Elite Value Title', eliteValueTitleController),
+                _buildTextField('Elite Value Description', eliteValueDescriptionController, maxLines: 3),
+                const SizedBox(height: 16),
+                const Text('Feature Sections', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                // For simplicity, we'll add editing for sections later
+                const Text('Feature section editing coming soon...', style: TextStyle(color: Colors.white70)),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+            ElevatedButton(
+              onPressed: () {
+                final updatedContent = EducationContent(
+                  heroTitle: heroTitleController.text.trim(),
+                  heroSubtitle: heroSubtitleController.text.trim(),
+                  eliteValueText: eliteValueTitleController.text.trim(),
+                  eliteValueDescription: eliteValueDescriptionController.text.trim(),
+                  featureSections: content.featureSections, // Keep existing for now
+                );
+                appState.currentEducationContent = updatedContent;
+                _commitContentChangesToGitHub(updatedContent);
+                Navigator.of(context).pop();
+              },
+              child: const Text('Save & Deploy'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _commitContentChangesToGitHub(EducationContent content) async {
+    setState(() {
+      _isSaving = true;
+      _statusMessage = null;
+    });
+
+    try {
+      final adminToken = html.window.localStorage['admin_token'] ?? '';
+      final requestBody = jsonEncode({
+        'content': content.toJson(),
+        'message': '📝 Update education content from admin panel',
+      });
+
+      final response = await html.window.fetch(
+        '/api/github/commit-education-content',
+        {
+          'method': 'POST',
+          'headers': {
+            'Content-Type': 'application/json',
+            'X-Admin-Token': adminToken,
+          },
+          'body': requestBody,
+        },
+      );
+
+      final ok = js_util.getProperty(response, 'ok') as bool? ?? false;
+      final status = js_util.getProperty(response, 'status') as int? ?? 0;
+
+      if (ok) {
+        final responseData = await js_util.promiseToFuture(js_util.callMethod(response, 'json', []));
+        final sha = responseData['commitSha'];
+        final url = responseData['commitUrl'] ?? 'Commit URL not provided';
+        setState(() => _statusMessage = 'Committed $sha');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('✅ Committed $sha\n📝 $url'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      } else {
+        final errorText = await js_util.promiseToFuture(js_util.callMethod(response, 'text', []));
+        final message = 'GitHub API $status';
+        setState(() => _statusMessage = '$message - $errorText');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('❌ $message'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    } catch (error, stack) {
+      setState(() => _statusMessage = 'Unable to publish: $error');
+      debugPrintStack(label: 'Content commit error', stackTrace: stack);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('❌ Unable to publish: $error'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   Widget _buildCourseCard(EducationTabCourse course, int index, AppState appState) {
