@@ -11,11 +11,6 @@ import 'refund_policy_page.dart';
 import 'faq_page.dart';
 import 'education_content.dart';
 import 'terms_and_conditions_page.dart';
-import 'kite_config.dart';
-import 'kite_oauth_service.dart';
-import 'auth_callback_page.dart';
-import 'oauth_dashboard.dart';
-import 'trading_dashboard.dart';
 import 'features_page.dart';
 import 'demo_page.dart';
 import 'setup_guide_page.dart';
@@ -101,10 +96,6 @@ final GoRouter _router = GoRouter(
       builder: (context, state) => const AIPredictionsPage(),
     ),
     GoRoute(
-      path: '/dashboard',
-      builder: (context, state) => const TradingDashboard(),
-    ),
-    GoRoute(
       path: '/privacy-policy',
       builder: (context, state) => const SimplePageLayout(child: PrivacyPolicyPage()),
     ),
@@ -119,23 +110,6 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/terms-and-conditions',
       builder: (context, state) => const SimplePageLayout(child: TermsAndConditionsPage()),
-    ),
-    GoRoute(
-      path: '/auth/callback',
-      builder: (context, state) => const AuthCallbackPage(),
-    ),
-    GoRoute(
-      path: '/admin',
-      builder: (context, state) => const AdminPanel(),
-    ),
-    // Redirects for old routes
-    GoRoute(
-      path: '/oauth-login',
-      redirect: (context, state) => '/',
-    ),
-    GoRoute(
-      path: '/oauth-dashboard',
-      redirect: (context, state) => '/dashboard',
     ),
   ],
 );
@@ -493,22 +467,13 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> checkLoginStatus() async {
-    isLoggedIn = await KiteOAuthService.isLoggedIn();
-    if (isLoggedIn) {
-      try {
-        final profile = await KiteOAuthService.getUserProfile();
-        if (profile != null && profile['data'] != null) {
-          userName = profile['data']['user_name'] ?? 'User';
-        }
-      } catch (e) {
-        print('Error fetching profile: $e');
-      }
-    }
+    // Removed Kite login check
+    isLoggedIn = false;
     notifyListeners();
   }
 
   Future<void> logout() async {
-    await KiteOAuthService.logout();
+    // Removed Kite logout
     isLoggedIn = false;
     userName = 'Guest';
     notifyListeners();
@@ -560,18 +525,6 @@ class SimplePageLayout extends StatelessWidget {
 // Main Home Page / Landing Page
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
-
-  void _startLogin(BuildContext context) {
-    if (KiteConfig.apiKey.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Missing KITE_API_KEY. Set it via --dart-define before deploying.')),
-      );
-      return;
-    }
-    final loginUrl = KiteOAuthService.getLoginUrl();
-    print('🔐 Starting login: $loginUrl');
-    html.window.location.href = loginUrl;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -652,20 +605,7 @@ class HomePage extends StatelessWidget {
                     child: const Text('Contact us', style: TextStyle(color: Colors.white, fontSize: 16)),
                   ),
                   const SizedBox(width: 30),
-                  TextButton(
-                    onPressed: () => _startLogin(context),
-                    child: const Text('Login', style: TextStyle(color: Colors.amber, fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: () => _startLogin(context), // For now, using same login function
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.amber,
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    ),
-                    child: const Text('Sign up'),
-                  ),
+                  // Removed login buttons
                   const SizedBox(width: 16),
                 ],
               ),
@@ -912,7 +852,7 @@ class HomePage extends StatelessWidget {
                         );
                       } else {
                         return ElevatedButton.icon(
-                          onPressed: () => _startLogin(context),
+                          onPressed: () => context.go('/admin'),
                           icon: const FaIcon(FontAwesomeIcons.signInAlt, size: 20),
                           label: const Text('Get Started'),
                           style: ElevatedButton.styleFrom(
@@ -1322,7 +1262,7 @@ class HomePage extends StatelessWidget {
                 );
               } else {
                 return ElevatedButton.icon(
-                  onPressed: () => _startLogin(context),
+                  onPressed: () => context.go('/admin'),
                   icon: const FaIcon(FontAwesomeIcons.signInAlt, size: 18),
                   label: const Text('Login'),
                   style: ElevatedButton.styleFrom(

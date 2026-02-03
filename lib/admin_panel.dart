@@ -267,13 +267,22 @@ class _AdminPanelState extends State<AdminPanel> with TickerProviderStateMixin {
   }
 
   Future<void> _commitContentChangesToGitHub(EducationContent content) async {
+    final adminToken = html.window.localStorage['admin_token'];
+    if (adminToken == null || adminToken.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('❌ Please login first to publish changes'), backgroundColor: Colors.red),
+        );
+      }
+      return;
+    }
+
     setState(() {
       _isSaving = true;
       _statusMessage = null;
     });
 
     try {
-      final adminToken = html.window.localStorage['admin_token'] ?? '';
       final requestBody = jsonEncode({
         'content': content.toJson(),
         'message': '📝 Update education content from admin panel',
@@ -399,6 +408,16 @@ class _AdminPanelState extends State<AdminPanel> with TickerProviderStateMixin {
   }
 
   Future<void> _commitEducationChangesToGitHub(List<EducationTabCourse> courses) async {
+    final adminToken = html.window.localStorage['admin_token'];
+    if (adminToken == null || adminToken.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('❌ Please login first to publish changes'), backgroundColor: Colors.red),
+        );
+      }
+      return;
+    }
+
     if (courses.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No courses to publish')),
@@ -412,7 +431,6 @@ class _AdminPanelState extends State<AdminPanel> with TickerProviderStateMixin {
     });
 
     try {
-      final adminToken = html.window.localStorage['admin_token'] ?? '';
       final requestBody = jsonEncode({
         'courses': courses.map((course) => course.toJson()).toList(),
         'message': '📚 Update education tab courses from admin panel',
