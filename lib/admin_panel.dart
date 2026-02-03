@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:html' as html;
+import 'dart:js_util' as js_util;
 
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -192,42 +193,45 @@ class _AdminPanelState extends State<AdminPanel> {
         'courseCount': courses.length,
       });
 
-      final response = await html.window.fetch(
-        '/api/github/commit-education-courses',
-        {
-          'method': 'POST',
-          'headers': {
-            'Content-Type': 'application/json',
-            'X-Admin-Token': adminToken,
+        final response = await html.window.fetch(
+          '/api/github/commit-education-courses',
+          {
+            'method': 'POST',
+            'headers': {
+              'Content-Type': 'application/json',
+              'X-Admin-Token': adminToken,
+            },
+            'body': requestBody,
           },
-          'body': requestBody,
-        },
-      ) as dynamic;
+        );
 
-      if (response.ok) {
-        final responseData = await (response.json() as dynamic);
-        final sha = responseData['commitSha'];
-        final url = responseData['commitUrl'] ?? 'Commit URL not provided';
-        setState(() => _statusMessage = 'Committed $sha');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('✅ Committed $sha\n📝 $url'),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 5),
-            ),
-          );
+        final ok = js_util.getProperty(response, 'ok') as bool? ?? false;
+        final status = js_util.getProperty(response, 'status') as int? ?? 0;
+
+        if (ok) {
+          final responseData = await js_util.promiseToFuture(js_util.callMethod(response, 'json', []));
+          final sha = responseData['commitSha'];
+          final url = responseData['commitUrl'] ?? 'Commit URL not provided';
+          setState(() => _statusMessage = 'Committed $sha');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('✅ Committed $sha\n📝 $url'),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 5),
+              ),
+            );
+          }
+        } else {
+          final errorText = await js_util.promiseToFuture(js_util.callMethod(response, 'text', []));
+          final message = 'GitHub API $status';
+          setState(() => _statusMessage = '$message - $errorText');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('❌ $message'), backgroundColor: Colors.red),
+            );
+          }
         }
-      } else {
-        final errorText = await (response.text() as dynamic);
-        final message = 'GitHub API ${response.status}';
-        setState(() => _statusMessage = '$message - $errorText');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('❌ $message'), backgroundColor: Colors.red),
-          );
-        }
-      }
     } catch (error, stack) {
       setState(() => _statusMessage = 'Unable to publish: $error');
       debugPrintStack(label: 'Education commit error', stackTrace: stack);
