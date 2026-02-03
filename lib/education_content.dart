@@ -34,11 +34,11 @@ class EducationTabCourse {
     return [
       EducationTabCourse(
       id: 'beginner',
-      title: 'Beginner Course',
+      title: 'Beginner Swing Trading Course',
       description: 'Your foundation to stock market success',
       icon: 'seedling',
-      color: 'blue',
-      price: ₹3,000,
+      color: 'green',
+      price: 3999,
       duration: '6 months access',
       features: [
         'Personal Trading Story',
@@ -47,7 +47,7 @@ class EducationTabCourse {
         'Risk Management',
         'Emotion Control'
       ],
-      details: 'only for beginners',
+      details: '3 modules • 15+ lessons • Community access',
       topics: [
         'Stock Market Fundamentals',
         'Technical Analysis Basics',
@@ -60,7 +60,7 @@ class EducationTabCourse {
       description: 'Complete equity trading with community support',
       icon: 'chartLine',
       color: 'blue',
-      price: ₹5,999,
+      price: 5999,
       duration: '12 months access',
       features: [
         'Price Action Methods',
@@ -82,7 +82,7 @@ class EducationTabCourse {
       description: 'Master options trading for high returns',
       icon: 'bolt',
       color: 'orange',
-      price: ₹7,999,
+      price: 7999,
       duration: '12 months access',
       features: [
         'Options Fundamentals',
@@ -104,7 +104,7 @@ class EducationTabCourse {
       description: 'Equity + Options combo for serious traders',
       icon: 'crown',
       color: 'amber',
-      price: ₹12,999,
+      price: 12999,
       duration: 'Lifetime access',
       features: [
         'Full Equity Course',
